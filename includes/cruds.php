@@ -170,7 +170,9 @@ class CRUD {
             $stmt->execute($params);
             
             // SELECT sorgusuysa sonuçları döndür
-            if (stripos($query, 'SELECT') === 0) {
+            // Başındaki boşlukları temizleyerek kontrol et
+            $normalizedQuery = ltrim($query);
+            if (stripos($normalizedQuery, 'SELECT') === 0) {
                 return $stmt->fetchAll();
             }
             
