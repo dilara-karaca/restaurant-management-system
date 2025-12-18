@@ -5,7 +5,6 @@ error_reporting(E_ALL);
 
 session_start();
 
-// Eğer zaten giriş yapmışsa dashboard'a yönlendir
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: /Restaurant-Management-System/admin/dashboard.php');
     exit;
@@ -16,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = isset($_POST['username']) ? $_POST['username'] : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
     
-    // Şimdiki basit kontrol (username: admin, password: 12345)
+    // (username: admin, password: 12345)
     if ($username === 'admin' && $password === '12345') {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_username'] = $username;
