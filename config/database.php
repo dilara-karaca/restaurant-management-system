@@ -3,21 +3,22 @@
  * Database Connection Class
  * PDO ile güvenli MySQL bağlantısı
  */
-class Database {
+class Database
+{
     // Veritabanı bilgileri
     private $host = "localhost";
     private $db_name = "restaurant_db";
     private $username = "root";
-    private $password = "LeX4uS11";
+    private $password = "";
     private $conn;
 
     /**
      * Veritabanı bağlantısını döndürür
      * @return PDO|null
      */
-    public function getConnection() {
+    public function getConnection()
+    {
         $this->conn = null;
-
         try {
             // PDO bağlantısı oluştur
             $this->conn = new PDO(
@@ -25,28 +26,23 @@ class Database {
                 $this->username,
                 $this->password
             );
-            
             // Hata modunu exception olarak ayarla
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
             // Fetch modunu associative array olarak ayarla
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            
             // Emulated prepares'i kapat (güvenlik)
             $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-            
-        } catch(PDOException $e) {
-            echo "Connection Error: " . $e->getMessage();
-            return null;
+        } catch (PDOException $e) {
+            throw new Exception("Veritabanı bağlantı hatası: " . $e->getMessage());
         }
-
         return $this->conn;
     }
 
     /**
      * Bağlantıyı kapat
      */
-    public function closeConnection() {
+    public function closeConnection()
+    {
         $this->conn = null;
     }
 }
