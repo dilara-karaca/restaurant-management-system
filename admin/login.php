@@ -5,6 +5,9 @@ error_reporting(E_ALL);
 
 session_start();
 
+// Test: PHP çalışıyor mı?
+echo '<!-- PHP is working -->';
+
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: /Restaurant-Management-System/admin/dashboard.php');
     exit;

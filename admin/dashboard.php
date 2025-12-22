@@ -44,13 +44,13 @@ include __DIR__ . '/../includes/layout/top.php';
                 <p class="nav-subtitle">Yönetim Paneli</p>
             </div>
             <ul class="nav-menu">
-                <li><a href="#" class="nav-link active">📊 Dashboard</a></li>
-                <li><a href="/Restaurant-Management-System/admin/menu.php" class="nav-link">📋 Menü</a></li>
-                <li><a href="#" class="nav-link">📦 Siparişler</a></li>
-                <li><a href="#" class="nav-link">🍽️ Masalar</a></li>
-                <li><a href="#" class="nav-link">📦 Stok</a></li>
-                <li><a href="#" class="nav-link">👥 Kullanıcılar</a></li>
-                <li><a href="#" class="nav-link">⚙️ Ayarlar</a></li>
+                <li><a href="#" class="nav-link active">Dashboard</a></li>
+                <li><a href="/Restaurant-Management-System/admin/menu.php" class="nav-link">Menü</a></li>
+                <li><a href="#" class="nav-link">Siparişler</a></li>
+                <li><a href="#" class="nav-link">Masalar</a></li>
+                <li><a href="#" class="nav-link">Stok</a></li>
+                <li><a href="#" class="nav-link">Kullanıcılar</a></li>
+                <li><a href="#" class="nav-link">Ayarlar</a></li>
             </ul>
             <div class="nav-footer">
                 <span class="user-name"><?php echo htmlspecialchars($username); ?></span>

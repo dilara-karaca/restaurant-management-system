@@ -7,4 +7,4 @@
 
   <link rel="stylesheet" href="/Restaurant-Management-System/assets/css/style.css">
 </head>
-<body>
+<body class="<?= $bodyClass ?? '' ?>">

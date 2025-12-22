@@ -8,8 +8,8 @@ class Database
     // Veritabanı bilgileri
     private $host = "localhost";
     private $db_name = "restaurant_db";
-    private $username = "root";
-    private $password = "";
+    private $username = "rms_user";
+    private $password = "rms123";
     private $conn;
 
     /**
