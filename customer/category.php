@@ -128,13 +128,111 @@ require_once __DIR__ . '/../includes/layout/top.php';
                             <?php endif; ?>
                             <div class="product-footer">
                                 <span class="product-price"><?= number_format($product['price'], 2) ?> ₺</span>
-                                <button class="add-to-cart-btn">Sepete Ekle</button>
+                                <button class="add-to-cart-btn" onclick="addToOrder(<?= $product['product_id'] ?>, '<?= htmlspecialchars($product['tr_name'], ENT_QUOTES) ?>', <?= $product['price'] ?>, '<?= htmlspecialchars($product['image_url'] ?? '', ENT_QUOTES) ?>')">
+                                    Siparişime Ekle
+                                </button>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+    </div>
+
+    <!-- Sipariş Butonu -->
+    <button class="order-bubble" id="orderBubble" onclick="toggleOrderPanel()">
+        <img src="../assets/images/serving-dishes.png" alt="Siparişler" class="order-bubble__icon">
+        <span class="order-bubble__badge" id="orderBadge">0</span>
+    </button>
+
+    <!-- Sipariş Paneli -->
+    <div class="order-panel" id="orderPanel">
+        <div class="order-panel__overlay" onclick="toggleOrderPanel()"></div>
+        <div class="order-panel__content">
+            <div class="order-panel__header">
+                <h2>Siparişlerim</h2>
+                <button class="order-panel__close" onclick="toggleOrderPanel()">✕</button>
+            </div>
+            <div class="order-panel__body">
+                <div class="order-panel__empty" id="emptyState">
+                    <p>Henüz sipariş eklemediniz</p>
+                    <small>Menüden ürün ekleyerek başlayın</small>
+                </div>
+                <div class="order-panel__items" id="orderItems" style="display: none;">
+                    <!-- Sipariş öğeleri buraya eklenecek -->
+                </div>
+            </div>
+            <div class="order-panel__footer" id="orderFooter" style="display: none;">
+                <div class="order-panel__total">
+                    <span>Toplam:</span>
+                    <strong id="orderTotal">0.00 ₺</strong>
+                </div>
+                <button class="order-panel__checkout" onclick="showCheckoutConfirm()">Siparişi Tamamla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modalı -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-modal__overlay" onclick="hideCheckoutConfirm()"></div>
+        <div class="confirm-modal__content">
+            <h3>Siparişi Tamamla</h3>
+            
+            <!-- Sipariş Özeti -->
+            <div class="checkout-summary">
+                <div class="checkout-summary__row">
+                    <span>Toplam Tutar:</span>
+                    <strong id="checkoutTotal">0.00 ₺</strong>
+                </div>
+            </div>
+
+            <!-- Masa Numarası -->
+            <div class="form-group">
+                <label for="tableNumber">Masa Numarası *</label>
+                <input type="number" id="tableNumber" class="form-input" placeholder="Masa numarasını giriniz" required min="1">
+            </div>
+
+            <!-- Ödeme Yöntemi -->
+            <div class="form-group">
+                <label>Ödeme Yöntemi *</label>
+                <div class="payment-methods">
+                    <label class="payment-method" onclick="event.stopPropagation()">
+                        <span class="payment-method__content">
+                            <input type="radio" name="paymentMethod" value="cash">
+                            <span class="payment-method__label">Nakit</span>
+                        </span>
+                    </label>
+                    <label class="payment-method" onclick="event.stopPropagation()">
+                        <span class="payment-method__content">
+                            <input type="radio" name="paymentMethod" value="card">
+                            <span class="payment-method__label">Kredi Kartı</span>
+                        </span>
+                    </label>
+                    <label class="payment-method" onclick="event.stopPropagation()">
+                        <span class="payment-method__content">
+                            <input type="radio" name="paymentMethod" value="mobile">
+                            <span class="payment-method__label">Mobil Ödeme</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Sipariş Notu -->
+            <div class="form-group">
+                <label for="orderNote">Sipariş Notu (Opsiyonel)</label>
+                <textarea id="orderNote" class="form-textarea" placeholder="Özel bir isteğiniz varsa buraya yazabilirsiniz..." rows="3"></textarea>
+            </div>
+
+            <div class="confirm-modal__actions">
+                <button class="confirm-modal__btn confirm-modal__btn--cancel" onclick="hideCheckoutConfirm()">Vazgeç</button>
+                <button class="confirm-modal__btn confirm-modal__btn--confirm" onclick="confirmCheckout()">Siparişi Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toastNotification">
+        <div class="toast__message">Siparişiniz başarıyla alındı!</div>
     </div>
 </main>
 
@@ -351,6 +449,891 @@ require_once __DIR__ . '/../includes/layout/top.php';
             padding: 6px 10px;
         }
     }
+
+    /* Sipariş Baloncuk Butonu */
+    .order-bubble {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+        border: none;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+        z-index: 999;
+        overflow: visible;
+    }
+
+    .order-bubble:hover {
+        transform: scale(1.1) translateY(-4px);
+        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.6);
+    }
+
+    .order-bubble:active {
+        transform: scale(0.95);
+    }
+
+    .order-bubble__icon {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .order-bubble__badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        min-width: 24px;
+        height: 24px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 6px;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+        border: 2px solid white;
+    }
+
+    @media (max-width: 768px) {
+        .order-bubble {
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+        }
+
+        .order-bubble__icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .order-bubble__badge {
+            min-width: 20px;
+            height: 20px;
+            font-size: 11px;
+        }
+    }
+
+    /* Sipariş Paneli */
+    .order-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .order-panel.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .order-panel__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+    }
+
+    .order-panel__content {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 400px;
+        max-width: 100%;
+        height: 100%;
+        background: var(--bg);
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+
+    .order-panel.active .order-panel__content {
+        transform: translateX(0);
+    }
+
+    .order-panel__header {
+        padding: 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+    }
+
+    .order-panel__header h2 {
+        margin: 0;
+        font-size: 22px;
+        background: linear-gradient(135deg, #2563eb, #10b981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .order-panel__close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--muted);
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .order-panel__close:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .order-panel__body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+    }
+
+    .order-panel__empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--muted);
+        text-align: center;
+    }
+
+    .order-panel__empty p {
+        margin: 0 0 8px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .order-panel__empty small {
+        font-size: 14px;
+        opacity: 0.7;
+    }
+
+    .order-panel__items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .order-panel__footer {
+        padding: 24px;
+        border-top: 1px solid var(--line);
+        background: var(--bg);
+    }
+
+    .order-panel__total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        font-size: 18px;
+    }
+
+    .order-panel__total strong {
+        font-size: 24px;
+        background: linear-gradient(135deg, #2563eb, #10b981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .order-panel__checkout {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .order-panel__checkout:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(37, 99, 235, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .order-panel__content {
+            width: 100%;
+        }
+    }
+
+    /* Sipariş Öğeleri */
+    .order-item-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    .order-item-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .order-item-delete span {
+        color: #ef4444;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .order-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--bg);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        z-index: 2;
+        width: 100%;
+    }
+
+    .order-item__image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .order-item__image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .order-item__details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .order-item__details h4 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .order-item__price {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+    }
+
+    .order-item__controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .qty-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .qty-btn:hover {
+        background: linear-gradient(135deg, #2563eb, #10b981);
+        color: white;
+        border-color: transparent;
+    }
+
+    .qty-display {
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    /* Onay Modalı */
+    .confirm-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .confirm-modal.active {
+        display: flex;
+    }
+
+    .confirm-modal__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.2s ease;
+    }
+
+    .confirm-modal__content {
+        position: relative;
+        background: var(--bg);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+        z-index: 1;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .confirm-modal__content h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        color: var(--text);
+    }
+
+    .confirm-modal__content p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    .confirm-modal__actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    /* Checkout Form */
+    .checkout-summary {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(16, 185, 129, 0.1));
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .checkout-summary__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 18px;
+    }
+
+    .checkout-summary__row strong {
+        font-size: 24px;
+        background: linear-gradient(135deg, #2563eb, #10b981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 15px;
+        background: var(--bg);
+        color: var(--text);
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .payment-method {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .payment-method__content input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #2563eb;
+        margin: 0;
+    }
+
+    .payment-method__content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        transition: all 0.2s ease;
+    }
+
+    .payment-method:has(input[type="radio"]:checked) .payment-method__content {
+        border-color: #2563eb;
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .payment-method__icon {
+        font-size: 24px;
+    }
+
+    .payment-method__label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    @media (max-width: 480px) {
+        .payment-methods {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .confirm-modal__btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .confirm-modal__btn--cancel {
+        background: rgba(0, 0, 0, 0.1);
+        color: var(--text);
+    }
+
+    .confirm-modal__btn--cancel:hover {
+        background: rgba(0, 0, 0, 0.15);
+    }
+
+    .confirm-modal__btn--confirm {
+        background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+        color: white;
+    }
+
+    .confirm-modal__btn--confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Toast Notification */
+    .toast-notification {
+        position: fixed;
+        bottom: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 3000;
+        transition: bottom 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+        min-width: 320px;
+        max-width: 90%;
+    }
+
+    .toast-notification.show {
+        bottom: 80px;
+    }
+
+    .toast-notification__icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .toast-notification__content h4 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .toast-notification__content p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
 </style>
+
+<script>
+let orderCart = JSON.parse(localStorage.getItem('orderCart')) || [];
+
+function toggleOrderPanel() {
+    const panel = document.getElementById('orderPanel');
+    panel.classList.toggle('active');
+}
+
+function addToOrder(productId, productName, price, imageUrl) {
+    // Ürün zaten sepette var mı?
+    const existingItem = orderCart.find(item => item.productId === productId);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        orderCart.push({
+            productId: productId,
+            productName: productName,
+            price: price,
+            imageUrl: imageUrl,
+            quantity: 1
+        });
+    }
+    
+    // LocalStorage'a kaydet
+    localStorage.setItem('orderCart', JSON.stringify(orderCart));
+    
+    // UI'yi güncelle
+    updateOrderUI();
+    
+    // Buton animasyonu
+    event.target.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        event.target.style.transform = 'scale(1)';
+    }, 150);
+}
+
+function updateOrderUI() {
+    const badge = document.getElementById('orderBadge');
+    const emptyState = document.getElementById('emptyState');
+    const orderItems = document.getElementById('orderItems');
+    const orderFooter = document.getElementById('orderFooter');
+    const orderTotal = document.getElementById('orderTotal');
+    
+    // Toplam ürün sayısı
+    const totalItems = orderCart.reduce((sum, item) => sum + item.quantity, 0);
+    badge.textContent = totalItems;
+    
+    if (orderCart.length === 0) {
+        emptyState.style.display = 'flex';
+        orderItems.style.display = 'none';
+        orderFooter.style.display = 'none';
+    } else {
+        emptyState.style.display = 'none';
+        orderItems.style.display = 'flex';
+        orderFooter.style.display = 'block';
+        
+        // Sipariş listesini oluştur
+        orderItems.innerHTML = orderCart.map(item => `
+            <div class="order-item-wrapper">
+                <div class="order-item-delete">
+                    <span>Sil</span>
+                </div>
+                <div class="order-item" data-product-id="${item.productId}">
+                    ${item.imageUrl ? `
+                    <div class="order-item__image">
+                        <img src="${item.imageUrl}" alt="${item.productName}">
+                    </div>
+                    ` : ''}
+                    <div class="order-item__details">
+                        <h4>${item.productName}</h4>
+                        <p class="order-item__price">${item.price.toFixed(2)} ₺</p>
+                    </div>
+                    <div class="order-item__controls">
+                        <button onclick="event.stopPropagation(); decreaseQuantity(${item.productId})" ontouchend="event.stopPropagation()" class="qty-btn">−</button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button onclick="event.stopPropagation(); increaseQuantity(${item.productId})" ontouchend="event.stopPropagation()" class="qty-btn">+</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Swipe-to-delete event'lerini ekle
+        document.querySelectorAll('.order-item-wrapper').forEach(wrapper => {
+            const item = wrapper.querySelector('.order-item');
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+            
+            item.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+                item.style.transition = 'none';
+            });
+            
+            item.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentX = e.touches[0].clientX;
+                const diff = currentX - startX;
+                if (diff < 0) {
+                    item.style.transform = `translateX(${diff}px)`;
+                    item.style.opacity = 1 + (diff / 200);
+                }
+            });
+            
+            item.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const diff = currentX - startX;
+                
+                if (diff < -80) {
+                    // Sil
+                    item.style.transition = 'all 0.3s ease';
+                    item.style.transform = 'translateX(-100%)';
+                    item.style.opacity = '0';
+                    setTimeout(() => {
+                        const productId = parseInt(item.dataset.productId);
+                        removeFromOrder(productId);
+                    }, 300);
+                } else {
+                    // Geri dön
+                    item.style.transition = 'all 0.3s ease';
+                    item.style.transform = 'translateX(0)';
+                    item.style.opacity = '1';
+                }
+            });
+        });
+        
+        // Toplam tutarı hesapla
+        const total = orderCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        orderTotal.textContent = total.toFixed(2) + ' ₺';
+    }
+}
+
+function increaseQuantity(productId) {
+    const item = orderCart.find(item => item.productId === productId);
+    if (item) {
+        item.quantity++;
+        localStorage.setItem('orderCart', JSON.stringify(orderCart));
+        updateOrderUI();
+    }
+}
+
+function decreaseQuantity(productId) {
+    const item = orderCart.find(item => item.productId === productId);
+    if (item) {
+        if (item.quantity === 1) {
+            // Sola kaydırma animasyonu ile sil
+            const wrapper = document.querySelector(`.order-item[data-product-id="${productId}"]`);
+            if (wrapper) {
+                wrapper.style.transition = 'all 0.3s ease';
+                wrapper.style.transform = 'translateX(-100%)';
+                wrapper.style.opacity = '0';
+                setTimeout(() => {
+                    removeFromOrder(productId);
+                }, 300);
+            }
+        } else {
+            item.quantity--;
+            localStorage.setItem('orderCart', JSON.stringify(orderCart));
+            updateOrderUI();
+        }
+    }
+}
+
+function removeFromOrder(productId) {
+    orderCart = orderCart.filter(item => item.productId !== productId);
+    localStorage.setItem('orderCart', JSON.stringify(orderCart));
+    updateOrderUI();
+}
+
+// Sayfa yüklendiğinde UI'yi güncelle
+document.addEventListener('DOMContentLoaded', function() {
+    updateOrderUI();
+});
+
+function showCheckoutConfirm() {
+    // Toplam tutarı hesapla ve göster
+    const total = orderCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    document.getElementById('checkoutTotal').textContent = total.toFixed(2) + ' ₺';
+    
+    // Modalı aç
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function hideCheckoutConfirm() {
+    document.getElementById('confirmModal').classList.remove('active');
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastNotification');
+    const toastMessage = toast.querySelector('.toast__message');
+    
+    // Mesajı güncelle
+    toastMessage.textContent = message;
+    
+    // Renk temasını ayarla
+    if (type === 'error') {
+        toast.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+    } else {
+        toast.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    }
+    
+    toast.classList.add('show');
+    
+    // 3 saniye sonra toast'u gizle
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function confirmCheckout() {
+    // Form verilerini topla
+    const tableNumber = document.getElementById('tableNumber').value;
+    const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
+    const orderNote = document.getElementById('orderNote').value;
+    
+    // Validasyon
+    if (!tableNumber || tableNumber < 1) {
+        showToast('Lütfen geçerli bir masa numarası giriniz!', 'error');
+        return;
+    }
+    
+    if (!paymentMethodElement) {
+        showToast('Lütfen bir ödeme yöntemi seçiniz!', 'error');
+        return;
+    }
+    
+    const paymentMethod = paymentMethodElement.value;
+    
+    // Sipariş verilerini hazırla
+    const orderData = {
+        tableNumber: tableNumber,
+        paymentMethod: paymentMethod,
+        orderNote: orderNote,
+        items: orderCart,
+        total: orderCart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Sipariş verilerini localStorage'a kaydet (diğer sayfada kullanılmak üzere)
+    localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+    
+    // Ödeme yöntemine göre işlem
+    if (paymentMethod === 'cash' || paymentMethod === 'card') {
+        // Nakit veya Kredi Kartı - direkt siparişi tamamla (garson fiziksel olarak alacak)
+        const methodText = paymentMethod === 'cash' ? 'Nakit' : 'Kredi Kartı';
+        console.log('Sipariş verileri (' + methodText + '):', orderData);
+        // TODO: Burada API'ye gönderilecek
+        
+        hideCheckoutConfirm();
+        showToast('Siparişiniz başarıyla alındı! ' + methodText + ' ile ödeyeceksiniz.', 'success');
+        
+        // 3 saniye sonra sepeti temizle
+        setTimeout(() => {
+            orderCart = [];
+            localStorage.removeItem('orderCart');
+            localStorage.removeItem('pendingOrder');
+            updateOrderUI();
+            toggleOrderPanel();
+            
+            // Formu sıfırla
+            document.getElementById('tableNumber').value = '';
+            document.getElementById('orderNote').value = '';
+            // Ödeme yöntemlerinin seçimini kaldır
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => radio.checked = false);
+        }, 400);
+    } else {
+        // Mobil ödeme - ödeme sayfasına yönlendir
+        hideCheckoutConfirm();
+        window.location.href = 'payment.php?method=' + paymentMethod;
+    }
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/layout/bottom.php'; ?>
