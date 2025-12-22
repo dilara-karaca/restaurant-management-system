@@ -6,7 +6,10 @@ require_once __DIR__ . '/../includes/layout/top.php';
 require_once __DIR__ . '/../includes/layout/admin_nav.php';
 ?>
 <div class="container mt-4">
-    <h1>Menü Yönetimi</h1>
+    <div style="margin-bottom:10px;">
+        <a href="/Restaurant-Management-System/admin/dashboard.php" class="add-btn" style="margin-right:12px; text-decoration:none;">Ana Sayfa</a>
+    </div>
+    <h1 style="margin:0 0 18px 0;">Menü Yönetimi</h1>
     <button class="add-btn" onclick="openCategoryModal()">+ Kategori Ekle</button>
     <div id="menu-categories" class="row"></div>
     <div id="menu-products" class="row" style="display:none;"></div>
