@@ -46,6 +46,7 @@ include __DIR__ . '/../includes/layout/top.php';
                     </div>
                     <div class="header-actions">
                         <button id="refreshStocksBtn" class="btn btn--secondary">Yenile</button>
+                        <button id="addIngredientBtn" class="btn btn--primary">Yeni Malzeme</button>
                     </div>
                 </div>
             </header>
@@ -232,6 +233,52 @@ include __DIR__ . '/../includes/layout/top.php';
                 <label class="field__label" for="editMovementNote">Not</label>
                 <div class="field__control">
                     <input id="editMovementNote" class="input" type="text">
+                </div>
+            </div>
+            <button class="btn btn--primary" type="submit">Kaydet</button>
+        </form>
+    </div>
+</div>
+
+<div id="ingredientModal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" id="ingredientModalClose">&times;</button>
+        <h3>Yeni Malzeme Ekle</h3>
+        <form id="ingredientForm" class="stock-form">
+            <div class="field">
+                <label class="field__label" for="ingredientName">Malzeme Adı</label>
+                <div class="field__control">
+                    <input id="ingredientName" class="input" type="text" required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="ingredientSupplier">Tedarikçi</label>
+                <div class="field__control">
+                    <select id="ingredientSupplier" class="input" required></select>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="ingredientUnit">Birim</label>
+                <div class="field__control">
+                    <input id="ingredientUnit" class="input" type="text" placeholder="kg, lt, adet..." required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="ingredientUnitPrice">Birim Fiyat (₺)</label>
+                <div class="field__control">
+                    <input id="ingredientUnitPrice" class="input" type="number" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="ingredientQuantity">Başlangıç Stok</label>
+                <div class="field__control">
+                    <input id="ingredientQuantity" class="input" type="number" min="0" step="0.01" required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="ingredientMinimum">Minimum Stok</label>
+                <div class="field__control">
+                    <input id="ingredientMinimum" class="input" type="number" min="0" step="0.01" required>
                 </div>
             </div>
             <button class="btn btn--primary" type="submit">Kaydet</button>

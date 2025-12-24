@@ -28,7 +28,7 @@ try {
         'image_url' => $imageUrl
     ]);
     if ($result) {
-        jsonResponse(true, 'Ürün eklendi');
+        jsonResponse(true, 'Ürün eklendi', ['product_id' => $result]);
     } else {
         jsonResponse(false, 'Ürün eklenemedi');
     }

@@ -3,6 +3,8 @@
     if (!tableBody) return;
 
     const apiBase = '/Restaurant-Management-System/api/stocks';
+    const ingredientApi = '/Restaurant-Management-System/api/ingredients';
+    const supplierApi = '/Restaurant-Management-System/api/suppliers/list.php';
     const notice = document.getElementById('stockNotice');
     const refreshBtn = document.getElementById('refreshStocksBtn');
     const form = document.getElementById('stockMovementForm');
@@ -25,10 +27,21 @@
     const editMovementType = document.getElementById('editMovementType');
     const editMovementQty = document.getElementById('editMovementQty');
     const editMovementNote = document.getElementById('editMovementNote');
+    const addIngredientBtn = document.getElementById('addIngredientBtn');
+    const ingredientModal = document.getElementById('ingredientModal');
+    const ingredientModalClose = document.getElementById('ingredientModalClose');
+    const ingredientForm = document.getElementById('ingredientForm');
+    const ingredientName = document.getElementById('ingredientName');
+    const ingredientSupplier = document.getElementById('ingredientSupplier');
+    const ingredientUnit = document.getElementById('ingredientUnit');
+    const ingredientUnitPrice = document.getElementById('ingredientUnitPrice');
+    const ingredientQuantity = document.getElementById('ingredientQuantity');
+    const ingredientMinimum = document.getElementById('ingredientMinimum');
 
     let stocks = [];
     let movements = [];
     let editingMovementId = null;
+    let suppliers = [];
 
     const formatNumber = (value) => {
         const num = Number(value || 0);
@@ -51,6 +64,14 @@
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const openModal = (modal) => {
+        if (modal) modal.classList.add('active');
+    };
+
+    const closeModal = (modal) => {
+        if (modal) modal.classList.remove('active');
     };
 
     const showNotice = (message, type = 'success') => {
@@ -135,6 +156,17 @@
         filterIngredient.innerHTML = `<option value="">Tümü</option>${options}`;
     };
 
+    const renderSuppliers = () => {
+        if (!ingredientSupplier) return;
+        if (!suppliers.length) {
+            ingredientSupplier.innerHTML = '<option value="">Tedarikçi bulunamadı</option>';
+            return;
+        }
+        ingredientSupplier.innerHTML = suppliers.map((item) => (
+            `<option value="${item.supplier_id}">${item.supplier_name}</option>`
+        )).join('');
+    };
+
     const renderMovementRow = (move) => {
         const labels = {
             IN: 'Gelen',
@@ -176,6 +208,16 @@
             renderFilterOptions();
         } catch (error) {
             showNotice(error.message, 'error');
+        }
+    };
+
+    const loadSuppliers = async () => {
+        try {
+            const data = await fetchJson(supplierApi);
+            suppliers = data.data || [];
+            renderSuppliers();
+        } catch (error) {
+            showNotice('Tedarikçi listesi alınamadı', 'error');
         }
     };
 
@@ -359,6 +401,62 @@
         });
     }
 
+    const openIngredientModal = () => {
+        if (!ingredientModal) return;
+        if (ingredientForm) ingredientForm.reset();
+        openModal(ingredientModal);
+    };
+
+    const closeIngredientModal = () => {
+        if (!ingredientModal) return;
+        closeModal(ingredientModal);
+    };
+
+    if (addIngredientBtn) {
+        addIngredientBtn.addEventListener('click', openIngredientModal);
+    }
+
+    if (ingredientModalClose) {
+        ingredientModalClose.addEventListener('click', closeIngredientModal);
+    }
+
+    if (ingredientModal) {
+        ingredientModal.addEventListener('click', (event) => {
+            if (event.target === ingredientModal) closeIngredientModal();
+        });
+    }
+
+    if (ingredientForm) {
+        ingredientForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = new URLSearchParams({
+                ingredient_name: ingredientName ? ingredientName.value.trim() : '',
+                supplier_id: ingredientSupplier ? ingredientSupplier.value : '',
+                unit: ingredientUnit ? ingredientUnit.value.trim() : '',
+                unit_price: ingredientUnitPrice ? ingredientUnitPrice.value : '',
+                quantity: ingredientQuantity ? ingredientQuantity.value : '',
+                minimum_quantity: ingredientMinimum ? ingredientMinimum.value : ''
+            });
+
+            try {
+                await fetchJson(`${ingredientApi}/create.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: payload.toString()
+                });
+                showNotice('Malzeme eklendi');
+                closeIngredientModal();
+                await loadStocks();
+                await loadMovements();
+            } catch (error) {
+                showNotice(error.message, 'error');
+            }
+        });
+    }
+
     loadStocks();
     loadMovements();
+    loadSuppliers();
 })();
