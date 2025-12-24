@@ -4,7 +4,13 @@ $extraJs = $extraJs ?? [];
   </div>
 
   <?php foreach ($extraJs as $jsPath): ?>
-    <script src="<?= htmlspecialchars($jsPath) ?>" defer></script>
+    <?php
+      $jsFile = $_SERVER['DOCUMENT_ROOT'] . $jsPath;
+      $jsVersion = file_exists($jsFile) ? filemtime($jsFile) : time();
+      $separator = strpos($jsPath, '?') === false ? '?' : '&';
+      $jsSrc = $jsPath . $separator . 'v=' . $jsVersion;
+    ?>
+    <script src="<?= htmlspecialchars($jsSrc) ?>" defer></script>
   <?php endforeach; ?>
 </body>
 </html>

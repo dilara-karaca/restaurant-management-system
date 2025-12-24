@@ -109,6 +109,20 @@ CREATE TABLE Stocks (
 ) ENGINE=InnoDB;
 
 -- ============================================
+-- 8.1 STOCK MOVEMENTS TABLE
+-- ============================================
+CREATE TABLE StockMovements (
+    movement_id INT AUTO_INCREMENT PRIMARY KEY,
+    ingredient_id INT NOT NULL,
+    movement_type ENUM('IN', 'OUT', 'USED') NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL,
+    note VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ingredient_id) REFERENCES Ingredients(ingredient_id) ON DELETE CASCADE,
+    INDEX idx_movement_date (created_at)
+) ENGINE=InnoDB;
+
+-- ============================================
 -- 9. MENU CATEGORIES TABLE
 -- ============================================
 CREATE TABLE MenuCategories (

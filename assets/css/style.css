@@ -1055,6 +1055,122 @@
         color: #ef4444;
     }
 
+    .status-badge.ok {
+        background: rgba(16, 185, 129, .15);
+        color: #10b981;
+    }
+
+    .status-badge.low {
+        background: rgba(245, 158, 11, .15);
+        color: #f59e0b;
+    }
+
+    .status-badge.critical {
+        background: rgba(239, 68, 68, .15);
+        color: #ef4444;
+    }
+
+    /* Stock Page */
+    .stock-grid {
+        display: grid;
+        grid-template-columns: 2.2fr 1fr;
+        gap: 16px;
+    }
+
+    .stock-side {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+    }
+
+    .stock-form {
+        display: grid;
+        gap: 12px;
+    }
+
+    .stock-filter {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .stock-filter-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .stock-movements {
+        display: grid;
+        gap: 12px;
+    }
+
+    .stock-movement-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, .15);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .stock-movement-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .orders-table td.stock-movement-actions {
+        justify-content: flex-end;
+        white-space: nowrap;
+    }
+
+    .stock-movement-meta {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .stock-movement-note {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .stock-movement-date {
+        color: var(--muted);
+        font-size: 11px;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .stock-movement-type {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 10px;
+        margin-left: 6px;
+    }
+
+    .stock-movement-type.in {
+        background: rgba(16, 185, 129, .15);
+        color: #10b981;
+    }
+
+    .stock-movement-type.out,
+    .stock-movement-type.used {
+        background: rgba(239, 68, 68, .15);
+        color: #ef4444;
+    }
+
+    @media (max-width: 1200px) {
+        .stock-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
     .status-badge.cooking {
         background: rgba(245, 158, 11, .1);
         color: #f59e0b;
