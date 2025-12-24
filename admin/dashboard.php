@@ -46,7 +46,7 @@ include __DIR__ . '/../includes/layout/top.php';
             <ul class="nav-menu">
                 <li><a href="#" class="nav-link active">Dashboard</a></li>
                 <li><a href="/Restaurant-Management-System/admin/menu.php" class="nav-link">Menü</a></li>
-                <li><a href="#" class="nav-link">Siparişler</a></li>
+                <li><a href="/Restaurant-Management-System/admin/orders.php" class="nav-link">Siparişler</a></li>
                 <li><a href="#" class="nav-link">Masalar</a></li>
                 <li><a href="#" class="nav-link">Stok</a></li>
                 <li><a href="#" class="nav-link">Kullanıcılar</a></li>

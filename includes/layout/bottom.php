@@ -8,8 +8,3 @@ $extraJs = $extraJs ?? [];
   <?php endforeach; ?>
 </body>
 </html>
-<?php if (!empty($extraJs)): ?>
-  <?php foreach ($extraJs as $js): ?>
-    <script src="<?= htmlspecialchars($js) ?>" defer></script>
-  <?php endforeach; ?>
-<?php endif; ?>
