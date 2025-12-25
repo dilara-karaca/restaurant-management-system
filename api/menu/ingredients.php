@@ -9,12 +9,10 @@ if ($productId <= 0) {
 
 try {
     $crud = new CRUD();
+    // SP-10: Menü ürün malzemeleri (ProductIngredients + Ingredients)
     $ingredients = $crud->customQuery(
-        'SELECT pi.ingredient_id, i.ingredient_name, pi.quantity_required
-         FROM ProductIngredients pi
-         JOIN Ingredients i ON pi.ingredient_id = i.ingredient_id
-         WHERE pi.product_id = :pid',
-        [':pid' => $productId]
+        "CALL sp_list_menu_ingredients(:product_id)",
+        [':product_id' => $productId]
     );
     jsonResponse(true, 'Ürün reçetesi', $ingredients);
 } catch (Exception $e) {

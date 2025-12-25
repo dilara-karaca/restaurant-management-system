@@ -23,6 +23,7 @@ include __DIR__ . '/../includes/layout/top.php';
                 <li><a href="/Restaurant-Management-System/admin/dashboard.php" class="nav-link">Dashboard</a></li>
                 <li><a href="/Restaurant-Management-System/admin/menu.php" class="nav-link active">Menü</a></li>
                 <li><a href="/Restaurant-Management-System/admin/orders.php" class="nav-link">Siparişler</a></li>
+                <li><a href="/Restaurant-Management-System/admin/reports.php" class="nav-link">Raporlar</a></li>
                 <li><a href="#" class="nav-link">Masalar</a></li>
                 <li><a href="/Restaurant-Management-System/admin/stock.php" class="nav-link">Stok</a></li>
                 <li><a href="#" class="nav-link">Kullanıcılar</a></li>

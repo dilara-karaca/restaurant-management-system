@@ -172,8 +172,11 @@ class CRUD {
             // SELECT sorgusuysa sonuçları döndür
             // Başındaki boşlukları temizleyerek kontrol et
             $normalizedQuery = ltrim($query);
-            if (stripos($normalizedQuery, 'SELECT') === 0) {
-                return $stmt->fetchAll();
+            $isSelectLike = stripos($normalizedQuery, 'SELECT') === 0 || stripos($normalizedQuery, 'CALL') === 0;
+            if ($isSelectLike || $stmt->columnCount() > 0) {
+                $rows = $stmt->fetchAll();
+                $stmt->closeCursor();
+                return $rows;
             }
             
             // INSERT, UPDATE, DELETE için boolean döndür

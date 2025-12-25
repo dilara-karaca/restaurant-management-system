@@ -4,60 +4,29 @@ require_once __DIR__ . '/../../includes/functions.php';
 
 $status = isset($_GET['status']) ? cleanInput($_GET['status']) : '';
 $allowedStatuses = ['Pending', 'Preparing', 'Served', 'Completed', 'Cancelled'];
-$where = '';
-$params = [];
-
-if ($status !== '') {
-    if (!in_array($status, $allowedStatuses, true)) {
-        jsonResponse(false, 'Geçersiz sipariş durumu');
-    }
-    $where = 'WHERE o.status = :status';
-    $params[':status'] = $status;
+if ($status !== '' && !in_array($status, $allowedStatuses, true)) {
+    jsonResponse(false, 'Geçersiz sipariş durumu');
 }
 
 try {
     $crud = new CRUD();
-    $orders = $crud->customQuery("
-        SELECT
-            o.order_id,
-            o.order_date,
-            o.total_amount,
-            o.status,
-            o.payment_method,
-            t.table_number,
-            c.first_name AS customer_first_name,
-            c.last_name AS customer_last_name,
-            p.first_name AS waiter_first_name,
-            p.last_name AS waiter_last_name
-        FROM Orders o
-        JOIN Tables t ON o.table_id = t.table_id
-        JOIN Customers c ON o.customer_id = c.customer_id
-        JOIN Personnel p ON o.served_by = p.personnel_id
-        $where
-        ORDER BY o.order_date DESC
-    ", $params);
+    // SP-14: Sipariş listesi (3+ tablo JOIN)
+    $orders = $crud->customQuery(
+        "CALL sp_list_orders(:status)",
+        [':status' => $status !== '' ? $status : null]
+    );
 
     if (empty($orders)) {
         jsonResponse(true, 'Sipariş listesi', []);
     }
 
     $orderIds = array_column($orders, 'order_id');
-    $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
-    $details = $crud->customQuery("
-        SELECT
-            od.order_detail_id,
-            od.order_id,
-            od.product_id,
-            mp.product_name,
-            od.quantity,
-            od.unit_price,
-            od.subtotal,
-            od.special_instructions
-        FROM OrderDetails od
-        JOIN MenuProducts mp ON od.product_id = mp.product_id
-        WHERE od.order_id IN ($placeholders)
-        ORDER BY od.order_detail_id ASC
-    ", $orderIds);
+    $orderIdsCsv = implode(',', $orderIds);
+    // SP-17: Sipariş kalemleri (OrderDetails + MenuProducts)
+    $details = $crud->customQuery(
+        "CALL sp_list_order_items_for_orders(:order_ids)",
+        [':order_ids' => $orderIdsCsv]
+    );
 
     $ordersById = [];
     foreach ($orders as $order) {

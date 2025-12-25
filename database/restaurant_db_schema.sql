@@ -559,6 +559,380 @@ INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) 
 (28, 14, 1, 65.00, 65.00);
 
 -- ============================================
+-- STORED PROCEDURES & TRIGGERS (ASSIGNMENT)
+-- ============================================
+-- Not: Bu blok 6, 7 ve 8. maddeler için hazırlanmıştır.
+
+DELIMITER $$
+
+-- SP-1: Sipariş genel raporu (Orders + Customers + Tables + Personnel + OrderDetails)
+DROP PROCEDURE IF EXISTS sp_report_orders_overview$$
+CREATE PROCEDURE sp_report_orders_overview(IN p_status VARCHAR(20))
+BEGIN
+    SELECT
+        o.order_id,
+        o.order_date,
+        o.status,
+        o.total_amount,
+        t.table_number,
+        CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+        CONCAT(p.first_name, ' ', p.last_name) AS waiter_name,
+        COUNT(od.order_detail_id) AS item_count
+    FROM Orders o
+    JOIN Tables t ON o.table_id = t.table_id
+    JOIN Customers c ON o.customer_id = c.customer_id
+    LEFT JOIN Personnel p ON o.served_by = p.personnel_id
+    LEFT JOIN OrderDetails od ON o.order_id = od.order_id
+    WHERE (p_status IS NULL OR p_status = '' OR o.status = p_status)
+    GROUP BY o.order_id, o.order_date, o.status, o.total_amount, t.table_number, c.first_name, c.last_name, p.first_name, p.last_name
+    ORDER BY o.order_date DESC
+    LIMIT 100; -- Trafiği azaltmak için limit
+END$$
+
+-- SP-2: Sipariş kalem raporu (Orders + OrderDetails + MenuProducts + MenuCategories)
+DROP PROCEDURE IF EXISTS sp_report_order_items$$
+CREATE PROCEDURE sp_report_order_items(IN p_order_id INT)
+BEGIN
+    SELECT
+        o.order_id,
+        o.order_date,
+        mc.category_name,
+        mp.product_name,
+        od.quantity,
+        od.unit_price,
+        od.subtotal
+    FROM Orders o
+    JOIN OrderDetails od ON o.order_id = od.order_id
+    JOIN MenuProducts mp ON od.product_id = mp.product_id
+    JOIN MenuCategories mc ON mp.category_id = mc.category_id
+    WHERE (p_order_id IS NULL OR p_order_id = 0 OR o.order_id = p_order_id)
+    ORDER BY o.order_date DESC, od.order_detail_id ASC
+    LIMIT 200;
+END$$
+
+-- SP-3: Stok özeti raporu (Stocks + Ingredients + Suppliers)
+DROP PROCEDURE IF EXISTS sp_report_stock_summary$$
+CREATE PROCEDURE sp_report_stock_summary()
+BEGIN
+    SELECT
+        s.stock_id,
+        i.ingredient_name,
+        i.unit,
+        s.quantity,
+        s.minimum_quantity,
+        sup.supplier_name
+    FROM Stocks s
+    JOIN Ingredients i ON s.ingredient_id = i.ingredient_id
+    LEFT JOIN Suppliers sup ON i.supplier_id = sup.supplier_id
+    ORDER BY i.ingredient_name ASC;
+END$$
+
+-- SP-4: Stok hareket raporu (StockMovements + Ingredients + Suppliers)
+DROP PROCEDURE IF EXISTS sp_report_stock_movements$$
+CREATE PROCEDURE sp_report_stock_movements(
+    IN p_ingredient_id INT,
+    IN p_movement_type VARCHAR(10),
+    IN p_date_from DATE,
+    IN p_date_to DATE,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_limit INT DEFAULT 50;
+    SET v_limit = IFNULL(p_limit, 50);
+    IF v_limit <= 0 THEN
+        SET v_limit = 50;
+    END IF;
+
+    SELECT
+        sm.movement_id,
+        sm.movement_type,
+        sm.quantity,
+        sm.note,
+        sm.created_at,
+        i.ingredient_name,
+        sup.supplier_name
+    FROM StockMovements sm
+    JOIN Ingredients i ON sm.ingredient_id = i.ingredient_id
+    LEFT JOIN Suppliers sup ON i.supplier_id = sup.supplier_id
+    WHERE (p_ingredient_id IS NULL OR p_ingredient_id = 0 OR sm.ingredient_id = p_ingredient_id)
+      AND (p_movement_type IS NULL OR p_movement_type = '' OR sm.movement_type = p_movement_type)
+      AND (p_date_from IS NULL OR DATE(sm.created_at) >= p_date_from)
+      AND (p_date_to IS NULL OR DATE(sm.created_at) <= p_date_to)
+    ORDER BY sm.created_at DESC
+    LIMIT v_limit;
+END$$
+
+-- SP-5: Menü reçete raporu (MenuProducts + MenuCategories + ProductIngredients + Ingredients)
+DROP PROCEDURE IF EXISTS sp_report_menu_composition$$
+CREATE PROCEDURE sp_report_menu_composition(IN p_category_id INT)
+BEGIN
+    SELECT
+        mp.product_id,
+        mp.product_name,
+        mc.category_name,
+        i.ingredient_name,
+        pi.quantity_required,
+        i.unit
+    FROM MenuProducts mp
+    JOIN MenuCategories mc ON mp.category_id = mc.category_id
+    JOIN ProductIngredients pi ON mp.product_id = pi.product_id
+    JOIN Ingredients i ON pi.ingredient_id = i.ingredient_id
+    WHERE (p_category_id IS NULL OR p_category_id = 0 OR mp.category_id = p_category_id)
+    ORDER BY mc.category_name, mp.product_name;
+END$$
+
+-- SP-6: Müşteri sipariş geçmişi (Customers + Orders + OrderDetails + MenuProducts)
+DROP PROCEDURE IF EXISTS sp_report_customer_history$$
+CREATE PROCEDURE sp_report_customer_history(IN p_customer_id INT)
+BEGIN
+    SELECT
+        c.customer_id,
+        CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+        o.order_id,
+        o.order_date,
+        mp.product_name,
+        od.quantity,
+        od.subtotal
+    FROM Customers c
+    JOIN Orders o ON c.customer_id = o.customer_id
+    JOIN OrderDetails od ON o.order_id = od.order_id
+    JOIN MenuProducts mp ON od.product_id = mp.product_id
+    WHERE (p_customer_id IS NULL OR p_customer_id = 0 OR c.customer_id = p_customer_id)
+    ORDER BY o.order_date DESC
+    LIMIT 200;
+END$$
+
+-- SP-7: Personel performans raporu (Personnel + Orders + OrderDetails + MenuProducts)
+DROP PROCEDURE IF EXISTS sp_report_personnel_performance$$
+CREATE PROCEDURE sp_report_personnel_performance(IN p_personnel_id INT)
+BEGIN
+    SELECT
+        p.personnel_id,
+        CONCAT(p.first_name, ' ', p.last_name) AS personnel_name,
+        COUNT(DISTINCT o.order_id) AS total_orders,
+        SUM(od.subtotal) AS total_sales,
+        COUNT(od.order_detail_id) AS total_items
+    FROM Personnel p
+    JOIN Orders o ON p.personnel_id = o.served_by
+    JOIN OrderDetails od ON o.order_id = od.order_id
+    JOIN MenuProducts mp ON od.product_id = mp.product_id
+    WHERE (p_personnel_id IS NULL OR p_personnel_id = 0 OR p.personnel_id = p_personnel_id)
+    GROUP BY p.personnel_id, p.first_name, p.last_name
+    ORDER BY total_sales DESC;
+END$$
+
+-- SP-8: Kategori listesi (tek tablo)
+DROP PROCEDURE IF EXISTS sp_list_categories$$
+CREATE PROCEDURE sp_list_categories()
+BEGIN
+    SELECT category_id, category_name, description, display_order, created_at
+    FROM MenuCategories
+    ORDER BY display_order ASC, category_name ASC;
+END$$
+
+-- SP-9: Menü ürün listesi (tek tablo)
+DROP PROCEDURE IF EXISTS sp_list_menu_products$$
+CREATE PROCEDURE sp_list_menu_products(IN p_category_id INT)
+BEGIN
+    SELECT product_id, category_id, product_name, description, price, is_available, image_url, created_at
+    FROM MenuProducts
+    WHERE (p_category_id IS NULL OR p_category_id = 0 OR category_id = p_category_id)
+    ORDER BY product_name ASC;
+END$$
+
+-- SP-10: Menü ürün malzemeleri (ProductIngredients + Ingredients)
+DROP PROCEDURE IF EXISTS sp_list_menu_ingredients$$
+CREATE PROCEDURE sp_list_menu_ingredients(IN p_product_id INT)
+BEGIN
+    SELECT pi.ingredient_id, i.ingredient_name, pi.quantity_required
+    FROM ProductIngredients pi
+    JOIN Ingredients i ON pi.ingredient_id = i.ingredient_id
+    WHERE (p_product_id IS NULL OR p_product_id = 0 OR pi.product_id = p_product_id);
+END$$
+
+-- SP-11: Malzeme listesi (Ingredients + Suppliers)
+DROP PROCEDURE IF EXISTS sp_list_ingredients$$
+CREATE PROCEDURE sp_list_ingredients()
+BEGIN
+    SELECT i.ingredient_id, i.ingredient_name, i.unit, i.unit_price, s.supplier_name
+    FROM Ingredients i
+    LEFT JOIN Suppliers s ON i.supplier_id = s.supplier_id
+    ORDER BY i.ingredient_name ASC;
+END$$
+
+-- SP-12: Tedarikçi listesi (tek tablo)
+DROP PROCEDURE IF EXISTS sp_list_suppliers$$
+CREATE PROCEDURE sp_list_suppliers()
+BEGIN
+    SELECT supplier_id, supplier_name, contact_person, phone, email, address, created_at
+    FROM Suppliers
+    ORDER BY supplier_name ASC;
+END$$
+
+-- SP-13: Stok listesi (Stocks + Ingredients + Suppliers)
+DROP PROCEDURE IF EXISTS sp_list_stocks$$
+CREATE PROCEDURE sp_list_stocks()
+BEGIN
+    SELECT s.stock_id, s.ingredient_id, i.ingredient_name, i.unit, i.unit_price, s.quantity, s.minimum_quantity, s.last_updated, sup.supplier_name
+    FROM Stocks s
+    JOIN Ingredients i ON s.ingredient_id = i.ingredient_id
+    LEFT JOIN Suppliers sup ON i.supplier_id = sup.supplier_id
+    ORDER BY i.ingredient_name ASC;
+END$$
+
+-- SP-14: Sipariş listesi (Orders + Tables + Customers + Personnel)
+DROP PROCEDURE IF EXISTS sp_list_orders$$
+CREATE PROCEDURE sp_list_orders(IN p_status VARCHAR(20))
+BEGIN
+    SELECT
+        o.order_id,
+        o.order_date,
+        o.total_amount,
+        o.status,
+        o.payment_method,
+        t.table_number,
+        c.first_name AS customer_first_name,
+        c.last_name AS customer_last_name,
+        p.first_name AS waiter_first_name,
+        p.last_name AS waiter_last_name
+    FROM Orders o
+    JOIN Tables t ON o.table_id = t.table_id
+    JOIN Customers c ON o.customer_id = c.customer_id
+    LEFT JOIN Personnel p ON o.served_by = p.personnel_id
+    WHERE (p_status IS NULL OR p_status = '' OR o.status = p_status)
+    ORDER BY o.order_date DESC;
+END$$
+
+-- SP-15: Personel sipariş listesi (Orders + Tables + Customers)
+DROP PROCEDURE IF EXISTS sp_list_orders_by_personnel$$
+CREATE PROCEDURE sp_list_orders_by_personnel(IN p_personnel_id INT, IN p_status VARCHAR(20))
+BEGIN
+    SELECT
+        o.order_id,
+        o.order_date,
+        o.total_amount,
+        o.status,
+        o.payment_method,
+        t.table_number,
+        c.first_name AS customer_first_name,
+        c.last_name AS customer_last_name
+    FROM Orders o
+    JOIN Tables t ON o.table_id = t.table_id
+    JOIN Customers c ON o.customer_id = c.customer_id
+    WHERE o.served_by = p_personnel_id
+      AND (p_status IS NULL OR p_status = '' OR o.status = p_status)
+    ORDER BY o.order_date DESC;
+END$$
+
+-- SP-16: Atanmamış sipariş listesi (Orders + Tables + Customers)
+DROP PROCEDURE IF EXISTS sp_list_orders_unassigned$$
+CREATE PROCEDURE sp_list_orders_unassigned(IN p_status VARCHAR(20))
+BEGIN
+    SELECT
+        o.order_id,
+        o.order_date,
+        o.total_amount,
+        o.status,
+        o.payment_method,
+        t.table_number,
+        c.first_name AS customer_first_name,
+        c.last_name AS customer_last_name
+    FROM Orders o
+    JOIN Tables t ON o.table_id = t.table_id
+    JOIN Customers c ON o.customer_id = c.customer_id
+    WHERE o.served_by IS NULL
+      AND (p_status IS NULL OR p_status = '' OR o.status = p_status)
+    ORDER BY o.order_date DESC;
+END$$
+
+-- SP-17: Sipariş kalemleri (OrderDetails + MenuProducts)
+DROP PROCEDURE IF EXISTS sp_list_order_items_for_orders$$
+CREATE PROCEDURE sp_list_order_items_for_orders(IN p_order_ids TEXT)
+BEGIN
+    SELECT
+        od.order_detail_id,
+        od.order_id,
+        od.product_id,
+        mp.product_name,
+        od.quantity,
+        od.unit_price,
+        od.subtotal,
+        od.special_instructions
+    FROM OrderDetails od
+    JOIN MenuProducts mp ON od.product_id = mp.product_id
+    WHERE FIND_IN_SET(od.order_id, p_order_ids)
+    ORDER BY od.order_detail_id ASC;
+END$$
+
+DELIMITER ;
+
+-- ============================================
+-- TRIGGERS (ASSIGNMENT)
+-- ============================================
+-- TR-1: Sipariş kalemi eklenince toplam ve stok güncelle
+DELIMITER $$
+DROP TRIGGER IF EXISTS trg_orderdetails_ai$$
+CREATE TRIGGER trg_orderdetails_ai
+AFTER INSERT ON OrderDetails
+FOR EACH ROW
+BEGIN
+    -- Sipariş toplamını güncelle
+    UPDATE Orders
+    SET total_amount = (
+        SELECT COALESCE(SUM(subtotal), 0)
+        FROM OrderDetails
+        WHERE order_id = NEW.order_id
+    )
+    WHERE order_id = NEW.order_id;
+
+    -- Stoktan düş ve hareket kaydı oluştur
+    UPDATE Stocks s
+    JOIN ProductIngredients pi ON s.ingredient_id = pi.ingredient_id
+    SET s.quantity = s.quantity - (pi.quantity_required * NEW.quantity)
+    WHERE pi.product_id = NEW.product_id;
+
+    INSERT INTO StockMovements (ingredient_id, movement_type, quantity, note)
+    SELECT
+        pi.ingredient_id,
+        'USED',
+        (pi.quantity_required * NEW.quantity),
+        CONCAT('Order #', NEW.order_id)
+    FROM ProductIngredients pi
+    WHERE pi.product_id = NEW.product_id;
+END$$
+
+-- TR-2: Sipariş kalemi güncellenince toplam güncelle
+DROP TRIGGER IF EXISTS trg_orderdetails_au$$
+CREATE TRIGGER trg_orderdetails_au
+AFTER UPDATE ON OrderDetails
+FOR EACH ROW
+BEGIN
+    UPDATE Orders
+    SET total_amount = (
+        SELECT COALESCE(SUM(subtotal), 0)
+        FROM OrderDetails
+        WHERE order_id = NEW.order_id
+    )
+    WHERE order_id = NEW.order_id;
+END$$
+
+-- TR-3: Sipariş kalemi silinince toplam güncelle
+DROP TRIGGER IF EXISTS trg_orderdetails_ad$$
+CREATE TRIGGER trg_orderdetails_ad
+AFTER DELETE ON OrderDetails
+FOR EACH ROW
+BEGIN
+    UPDATE Orders
+    SET total_amount = (
+        SELECT COALESCE(SUM(subtotal), 0)
+        FROM OrderDetails
+        WHERE order_id = OLD.order_id
+    )
+    WHERE order_id = OLD.order_id;
+END$$
+DELIMITER ;
+
+-- ============================================
 -- VERIFICATION QUERIES
 -- ============================================
 

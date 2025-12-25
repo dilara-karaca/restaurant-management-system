@@ -6,12 +6,12 @@ $categoryId = isset($_GET['category_id']) ? intval($_GET['category_id']) : 0;
 
 try {
     $crud = new CRUD();
-    // SP-9: Menü ürün listesi (tek tablo)
-    $products = $crud->customQuery(
-        "CALL sp_list_menu_products(:category_id)",
+    // SP-5: Menü reçete raporu (3+ tablo JOIN)
+    $rows = $crud->customQuery(
+        "CALL sp_report_menu_composition(:category_id)",
         [':category_id' => $categoryId > 0 ? $categoryId : null]
     );
-    jsonResponse(true, 'Menü ürünleri listesi', $products);
+    jsonResponse(true, 'Menü reçete raporu', $rows);
 } catch (Exception $e) {
-    jsonResponse(false, 'Menü ürünleri listelenemedi: ' . $e->getMessage());
+    jsonResponse(false, 'Rapor alınamadı: ' . $e->getMessage());
 }
