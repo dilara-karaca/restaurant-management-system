@@ -168,7 +168,7 @@ CREATE TABLE Orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
     table_id INT NOT NULL,
-    served_by INT NOT NULL,
+    served_by INT,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
     status ENUM('Pending', 'Preparing', 'Served', 'Completed', 'Cancelled') DEFAULT 'Pending',
@@ -370,8 +370,11 @@ INSERT INTO Orders (customer_id, table_id, served_by, total_amount, status, paym
 (1, 4, 2, 375.00, 'Completed', 'Credit Card'),
 (2, 2, 3, 220.00, 'Served', 'Cash'),
 (3, 1, 4, 185.00, 'Preparing', 'Mobile Payment'),
-(4, 7, 2, 450.00, 'Pending', NULL),
-(5, 5, 3, 160.00, 'Completed', 'Debit Card');
+(4, 7, NULL, 450.00, 'Pending', NULL),
+(5, 5, 3, 160.00, 'Completed', 'Debit Card'),
+(1, 3, NULL, 160.00, 'Pending', NULL),
+(2, 6, NULL, 225.00, 'Pending', NULL),
+(3, 8, 2, 170.00, 'Preparing', NULL);
 
 -- 13. ORDER DETAILS
 -- Order 1
@@ -401,6 +404,159 @@ INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) 
 INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
 (5, 11, 1, 120.00, 120.00),
 (5, 15, 2, 25.00, 50.00);
+
+-- Order 6 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(6, 4, 1, 90.00, 90.00),
+(6, 10, 2, 35.00, 70.00);
+
+-- Order 7 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(7, 6, 1, 120.00, 120.00),
+(7, 12, 1, 55.00, 55.00),
+(7, 18, 2, 25.00, 50.00);
+
+-- Order 8
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(8, 5, 1, 110.00, 110.00),
+(8, 13, 1, 60.00, 60.00);
+
+-- 14. EXTRA SAMPLE ORDERS (Assigned + Unassigned)
+INSERT INTO Orders (customer_id, table_id, served_by, total_amount, status, payment_method) VALUES
+(1, 2, 2, 150.00, 'Pending', NULL),
+(2, 3, 3, 215.00, 'Preparing', NULL),
+(3, 4, 4, 180.00, 'Served', 'Cash'),
+(4, 5, 2, 260.00, 'Completed', 'Credit Card'),
+(5, 6, 3, 140.00, 'Pending', NULL),
+(1, 7, 4, 205.00, 'Preparing', NULL),
+(2, 8, 2, 175.00, 'Served', 'Debit Card'),
+(3, 1, 3, 230.00, 'Completed', 'Mobile Payment'),
+(4, 2, 4, 155.00, 'Pending', NULL),
+(5, 3, 2, 190.00, 'Preparing', NULL),
+(1, 4, NULL, 160.00, 'Pending', NULL),
+(2, 5, NULL, 225.00, 'Pending', NULL),
+(3, 6, NULL, 210.00, 'Preparing', NULL),
+(4, 7, NULL, 195.00, 'Pending', NULL),
+(5, 8, NULL, 240.00, 'Served', NULL),
+(1, 1, NULL, 170.00, 'Pending', NULL),
+(2, 2, NULL, 200.00, 'Preparing', NULL),
+(3, 3, NULL, 185.00, 'Pending', NULL),
+(4, 4, NULL, 230.00, 'Served', NULL),
+(5, 5, NULL, 150.00, 'Pending', NULL);
+
+-- Order 9
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(9, 1, 1, 65.00, 65.00),
+(9, 7, 1, 85.00, 85.00);
+
+-- Order 10
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(10, 3, 1, 75.00, 75.00),
+(10, 9, 1, 95.00, 95.00),
+(10, 17, 1, 45.00, 45.00);
+
+-- Order 11
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(11, 10, 1, 110.00, 110.00),
+(11, 16, 1, 40.00, 40.00),
+(11, 15, 1, 30.00, 30.00);
+
+-- Order 12
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(12, 8, 1, 280.00, 280.00),
+(12, 18, 2, 25.00, 50.00);
+
+-- Order 13
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(13, 6, 1, 120.00, 120.00),
+(13, 15, 1, 20.00, 20.00);
+
+-- Order 14
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(14, 5, 1, 110.00, 110.00),
+(14, 12, 1, 70.00, 70.00),
+(14, 19, 1, 25.00, 25.00);
+
+-- Order 15
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(15, 2, 1, 85.00, 85.00),
+(15, 14, 1, 65.00, 65.00),
+(15, 17, 1, 25.00, 25.00);
+
+-- Order 16
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(16, 4, 1, 90.00, 90.00),
+(16, 13, 1, 60.00, 60.00),
+(16, 18, 2, 25.00, 50.00);
+
+-- Order 17
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(17, 11, 1, 120.00, 120.00),
+(17, 15, 1, 35.00, 35.00);
+
+-- Order 18
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(18, 9, 1, 95.00, 95.00),
+(18, 14, 1, 60.00, 60.00);
+
+-- Order 19 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(19, 1, 1, 65.00, 65.00),
+(19, 12, 1, 70.00, 70.00),
+(19, 15, 1, 25.00, 25.00);
+
+-- Order 20 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(20, 3, 1, 75.00, 75.00),
+(20, 9, 1, 95.00, 95.00),
+(20, 17, 1, 45.00, 45.00),
+(20, 18, 1, 10.00, 10.00);
+
+-- Order 21 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(21, 4, 1, 90.00, 90.00),
+(21, 10, 1, 110.00, 110.00),
+(21, 19, 1, 10.00, 10.00);
+
+-- Order 22 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(22, 5, 1, 110.00, 110.00),
+(22, 13, 1, 60.00, 60.00),
+(22, 18, 1, 25.00, 25.00);
+
+-- Order 23 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(23, 6, 1, 120.00, 120.00),
+(23, 14, 1, 65.00, 65.00),
+(23, 15, 1, 25.00, 25.00),
+(23, 17, 1, 30.00, 30.00);
+
+-- Order 24 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(24, 7, 1, 85.00, 85.00),
+(24, 12, 1, 70.00, 70.00),
+(24, 19, 1, 15.00, 15.00);
+
+-- Order 25 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(25, 8, 1, 280.00, 280.00),
+(25, 18, 1, 25.00, 25.00);
+
+-- Order 26 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(26, 9, 1, 95.00, 95.00),
+(26, 10, 1, 110.00, 110.00);
+
+-- Order 27 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(27, 11, 1, 120.00, 120.00),
+(27, 13, 1, 60.00, 60.00),
+(27, 15, 1, 5.00, 5.00);
+
+-- Order 28 (Unassigned)
+INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, subtotal) VALUES
+(28, 2, 1, 85.00, 85.00),
+(28, 14, 1, 65.00, 65.00);
 
 -- ============================================
 -- VERIFICATION QUERIES
