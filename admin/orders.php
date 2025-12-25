@@ -1,11 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/functions.php';
 date_default_timezone_set('Europe/Istanbul');
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: /Restaurant-Management-System/admin/login.php');
-    exit;
-}
+requireAdmin();
 
 $bodyClass = "page-admin";
 $title = "Siparişler";

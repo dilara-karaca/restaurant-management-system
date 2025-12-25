@@ -1,12 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/functions.php';
 date_default_timezone_set('Europe/Istanbul');
 
-// Session kontrolü - Eğer giriş yapılmamışsa login sayfasına yönlendir
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: /Restaurant-Management-System/admin/login.php');
-    exit;
-}
+requireAdmin();
 
 $extraJs = [];
 $bodyClass = "page-admin";

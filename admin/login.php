@@ -22,6 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === 'admin' && $password === '12345') {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_username'] = $username;
+        $_SESSION['logged_in'] = true;
+        $_SESSION['role_name'] = 'Admin';
+        $_SESSION['user_id'] = null;
         header('Location: /Restaurant-Management-System/admin/dashboard.php');
         exit;
     } else {

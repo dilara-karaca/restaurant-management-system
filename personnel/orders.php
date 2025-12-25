@@ -1,12 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/functions.php';
 
 date_default_timezone_set('Europe/Istanbul');
 
-if (!isset($_SESSION['personnel_logged_in']) || $_SESSION['personnel_logged_in'] !== true) {
-    header('Location: /Restaurant-Management-System/personnel/login.php');
-    exit;
-}
+requirePersonnel();
 
 $bodyClass = "page-admin";
 $title = "Personel Siparişleri";

@@ -62,6 +62,9 @@ function startSession() {
  */
 function isLoggedIn() {
     startSession();
+    if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+        return true;
+    }
     return isset($_SESSION['user_id']);
 }
 
@@ -92,5 +95,52 @@ function requireRole($role) {
         header('Location: /pages/unauthorized.php');
         exit;
     }
+}
+
+/**
+ * Login gerekli sayfalar için koruma (özel redirect ile)
+ */
+function requireLoginWithRedirect(string $redirectPath) {
+    if (!isLoggedIn()) {
+        header('Location: ' . $redirectPath);
+        exit;
+    }
+}
+
+/**
+ * Rol kontrolü gerekli sayfalar için koruma (özel redirect ile)
+ */
+function requireRoleWithRedirect(string $role, string $redirectPath) {
+    requireLoginWithRedirect($redirectPath);
+    if (!hasRole($role)) {
+        header('Location: ' . $redirectPath);
+        exit;
+    }
+}
+
+/**
+ * Birden fazla role izin veren koruma
+ */
+function requireAnyRole(array $roles, string $redirectPath) {
+    requireLoginWithRedirect($redirectPath);
+    $currentRole = $_SESSION['role_name'] ?? null;
+    if ($currentRole === null || !in_array($currentRole, $roles, true)) {
+        header('Location: ' . $redirectPath);
+        exit;
+    }
+}
+
+/**
+ * Admin sayfaları için kısa koruma
+ */
+function requireAdmin() {
+    requireRoleWithRedirect('Admin', '/Restaurant-Management-System/admin/login.php');
+}
+
+/**
+ * Personel sayfaları için kısa koruma
+ */
+function requirePersonnel() {
+    requireAnyRole(['Waiter', 'Manager'], '/Restaurant-Management-System/personnel/login.php');
 }
 ?>

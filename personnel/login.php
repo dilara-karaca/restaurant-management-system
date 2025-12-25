@@ -49,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['personnel_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
                     $_SESSION['personnel_role'] = $user['role_name'];
                     $_SESSION['personnel_username'] = $user['username'];
+                    $_SESSION['logged_in'] = true;
+                    $_SESSION['role_name'] = $user['role_name'];
+                    $_SESSION['user_id'] = (int) $user['user_id'];
 
                     header('Location: /Restaurant-Management-System/personnel/orders.php');
                     exit;
