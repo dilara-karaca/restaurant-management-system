@@ -1,0 +1,55 @@
+# IDE ve Editörler
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Log dosyaları
+*.log
+logs/
+error_log
+
+# Geçici dosyalar
+tmp/
+temp/
+*.tmp
+
+# Test ve debug dosyaları (opsiyonel - commit edilebilir)
+# test.php
+# test_*.php
+# check_*.php
+
+# Veritabanı yedekleri
+*.sql.bak
+*.sql.gz
+backup/
+
+# Kullanıcı yüklemeleri (eğer varsa)
+uploads/
+user_uploads/
+
+# Composer (eğer kullanılıyorsa)
+vendor/
+composer.lock
+
+# Node modules (eğer kullanılıyorsa)
+node_modules/
+package-lock.json
+
+# Environment dosyaları
+.env
+.env.local
+.env.*.local
+
+# XAMPP özel dosyalar
+xampp/
+
+# PHP session dosyaları
+sessions/
+
+# Cache dosyaları
+cache/
+*.cache
+

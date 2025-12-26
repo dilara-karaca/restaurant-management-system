@@ -21,6 +21,35 @@ try {
         "CALL sp_list_orders_unassigned(:status)",
         [':status' => $status !== '' ? $status : null]
     );
+    if ($orders === false) {
+        $params = [];
+        $whereSql = ' WHERE o.served_by IS NULL';
+        if ($status !== '') {
+            $whereSql .= ' AND o.status = :status';
+            $params[':status'] = $status;
+        }
+        $orders = $crud->customQuery(
+            "SELECT
+                o.order_id,
+                o.order_date,
+                o.total_amount,
+                o.status,
+                o.payment_method,
+                t.table_number,
+                c.first_name AS customer_first_name,
+                c.last_name AS customer_last_name
+             FROM Orders o
+             JOIN Tables t ON o.table_id = t.table_id
+             JOIN Customers c ON o.customer_id = c.customer_id
+             {$whereSql}
+             ORDER BY o.order_date DESC",
+            $params
+        );
+    }
+
+    if ($orders === false) {
+        jsonResponse(false, 'Sipariş listesi alınamadı.');
+    }
 
     if (empty($orders)) {
         jsonResponse(true, 'Sipariş listesi', []);
@@ -33,6 +62,29 @@ try {
         "CALL sp_list_order_items_for_orders(:order_ids)",
         [':order_ids' => $orderIdsCsv]
     );
+    if ($details === false) {
+        $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+        $details = $crud->customQuery(
+            "SELECT
+                od.order_detail_id,
+                od.order_id,
+                od.product_id,
+                mp.product_name,
+                od.quantity,
+                od.unit_price,
+                od.subtotal,
+                od.special_instructions
+             FROM OrderDetails od
+             JOIN MenuProducts mp ON od.product_id = mp.product_id
+             WHERE od.order_id IN ({$placeholders})
+             ORDER BY od.order_detail_id ASC",
+            $orderIds
+        );
+    }
+
+    if ($details === false) {
+        jsonResponse(false, 'Sipariş kalemleri listelenemedi.');
+    }
 
     $ordersById = [];
     foreach ($orders as $order) {

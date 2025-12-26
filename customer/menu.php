@@ -121,35 +121,21 @@ require_once __DIR__ . '/../includes/layout/top.php';
                 </div>
             </div>
 
-            <!-- Masa Numarası -->
-            <div class="form-group">
-                <label for="tableNumber">Masa Numarası *</label>
-                <input type="number" id="tableNumber" class="form-input" placeholder="Masa numarasını giriniz" required min="1">
+            <!-- Masa Bilgisi -->
+            <div class="info-message">
+                <p>📍 Masa numarası otomatik olarak atanacaktır.</p>
             </div>
 
-            <!-- Ödeme Yöntemi -->
+            <!-- Müşteri İsmi -->
             <div class="form-group">
-                <label>Ödeme Yöntemi *</label>
-                <div class="payment-methods">
-                    <label class="payment-method" onclick="event.stopPropagation()">
-                        <span class="payment-method__content">
-                            <input type="radio" name="paymentMethod" value="cash">
-                            <span class="payment-method__label">Nakit</span>
-                        </span>
-                    </label>
-                    <label class="payment-method" onclick="event.stopPropagation()">
-                        <span class="payment-method__content">
-                            <input type="radio" name="paymentMethod" value="card">
-                            <span class="payment-method__label">Kredi Kartı</span>
-                        </span>
-                    </label>
-                    <label class="payment-method" onclick="event.stopPropagation()">
-                        <span class="payment-method__content">
-                            <input type="radio" name="paymentMethod" value="mobile">
-                            <span class="payment-method__label">Mobil Ödeme</span>
-                        </span>
-                    </label>
-                </div>
+                <label for="customerName">Adınız Soyadınız *</label>
+                <input type="text" id="customerName" class="form-input" placeholder="Adınızı ve soyadınızı giriniz" required>
+            </div>
+
+            <!-- Bilgi Mesajı -->
+            <div class="info-message">
+                <p>💡 Ödeme işlemi personel tarafından alınacaktır.</p>
+                <p>📍 Masa numarası otomatik olarak atanacaktır.</p>
             </div>
 
             <!-- Sipariş Notu -->
@@ -695,6 +681,34 @@ require_once __DIR__ . '/../includes/layout/top.php';
         text-align: center;
     }
 
+    .delete-item-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        margin-left: 4px;
+        padding: 0;
+    }
+
+    .delete-item-btn:hover {
+        background: #ef4444;
+        color: white;
+        border-color: #ef4444;
+        transform: scale(1.1);
+    }
+
+    .delete-item-btn:active {
+        transform: scale(0.95);
+    }
+
     /* Onay Modalı */
     .confirm-modal {
         position: fixed;
@@ -814,55 +828,19 @@ require_once __DIR__ . '/../includes/layout/top.php';
         resize: vertical;
     }
 
-    .payment-methods {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-    }
-
-    .payment-method {
-        position: relative;
-        cursor: pointer;
-    }
-
-    .payment-method__content input[type="radio"] {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        accent-color: #2563eb;
-        margin: 0;
-    }
-
-    .payment-method__content {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px;
-        border: 2px solid var(--line);
+    .info-message {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(16, 185, 129, 0.1));
+        border: 1px solid rgba(37, 99, 235, 0.3);
         border-radius: 10px;
-        background: var(--bg);
-        transition: all 0.2s ease;
+        padding: 12px 16px;
+        margin-bottom: 20px;
     }
 
-    .payment-method:has(input[type="radio"]:checked) .payment-method__content {
-        border-color: #2563eb;
-        background: rgba(37, 99, 235, 0.05);
-    }
-
-    .payment-method__icon {
-        font-size: 24px;
-    }
-
-    .payment-method__label {
-        font-size: 12px;
-        font-weight: 600;
+    .info-message p {
+        margin: 0;
+        font-size: 14px;
         color: var(--text);
-    }
-
-    @media (max-width: 480px) {
-        .payment-methods {
-            grid-template-columns: 1fr;
-        }
+        line-height: 1.5;
     }
 
     .confirm-modal__btn {
@@ -1009,6 +987,9 @@ function updateOrderUI() {
                         <button onclick="event.stopPropagation(); decreaseQuantity(${item.productId})" ontouchend="event.stopPropagation()" class="qty-btn">−</button>
                         <span class="qty-display">${item.quantity}</span>
                         <button onclick="event.stopPropagation(); increaseQuantity(${item.productId})" ontouchend="event.stopPropagation()" class="qty-btn">+</button>
+                        <button onclick="event.stopPropagation(); removeFromOrder(${item.productId})" ontouchend="event.stopPropagation()" class="delete-item-btn" title="Ürünü Sil">
+                            🗑️
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1098,9 +1079,22 @@ function decreaseQuantity(productId) {
 }
 
 function removeFromOrder(productId) {
-    orderCart = orderCart.filter(item => item.productId !== productId);
-    localStorage.setItem('orderCart', JSON.stringify(orderCart));
-    updateOrderUI();
+    // Animasyonlu silme
+    const itemElement = document.querySelector(`.order-item[data-product-id="${productId}"]`);
+    if (itemElement) {
+        itemElement.style.transition = 'all 0.3s ease';
+        itemElement.style.transform = 'translateX(-100%)';
+        itemElement.style.opacity = '0';
+        setTimeout(() => {
+            orderCart = orderCart.filter(item => item.productId !== productId);
+            localStorage.setItem('orderCart', JSON.stringify(orderCart));
+            updateOrderUI();
+        }, 300);
+    } else {
+        orderCart = orderCart.filter(item => item.productId !== productId);
+        localStorage.setItem('orderCart', JSON.stringify(orderCart));
+        updateOrderUI();
+    }
 }
 
 // Sayfa yüklendiğinde UI'yi güncelle
@@ -1143,66 +1137,90 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-function confirmCheckout() {
+async function confirmCheckout() {
     // Form verilerini topla
-    const tableNumber = document.getElementById('tableNumber').value;
-    const paymentMethodElement = document.querySelector('input[name="paymentMethod"]:checked');
+    const customerName = document.getElementById('customerName').value.trim();
     const orderNote = document.getElementById('orderNote').value;
     
     // Validasyon
-    if (!tableNumber || tableNumber < 1) {
-        showToast('Lütfen geçerli bir masa numarası giriniz!', 'error');
+    if (!customerName || customerName.length < 2) {
+        showToast('Lütfen adınızı ve soyadınızı giriniz!', 'error');
         return;
     }
     
-    if (!paymentMethodElement) {
-        showToast('Lütfen bir ödeme yöntemi seçiniz!', 'error');
+    if (orderCart.length === 0) {
+        showToast('Sepetiniz boş!', 'error');
         return;
     }
     
-    const paymentMethod = paymentMethodElement.value;
+    // İsmi ad ve soyada ayır
+    const nameParts = customerName.split(' ');
+    const firstName = nameParts[0] || customerName;
+    const lastName = nameParts.slice(1).join(' ') || 'Müşteri';
     
     // Sipariş verilerini hazırla
     const orderData = {
-        tableNumber: tableNumber,
-        paymentMethod: paymentMethod,
-        orderNote: orderNote,
-        items: orderCart,
-        total: orderCart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        timestamp: new Date().toISOString()
+        customer_name: customerName,
+        first_name: firstName,
+        last_name: lastName,
+        order_note: orderNote || null,
+        items: orderCart.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            specialInstructions: null
+        }))
     };
     
-    // Sipariş verilerini localStorage'a kaydet (diğer sayfada kullanılmak üzere)
-    localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    
-    // Ödeme yöntemine göre işlem
-    if (paymentMethod === 'cash' || paymentMethod === 'card') {
-        // Nakit veya Kredi Kartı - direkt siparişi tamamla (garson fiziksel olarak alacak)
-        const methodText = paymentMethod === 'cash' ? 'Nakit' : 'Kredi Kartı';
-        console.log('Sipariş verileri (' + methodText + '):', orderData);
-        // TODO: Burada API'ye gönderilecek
+    try {
+        // API'ye sipariş gönder
+        const formData = new URLSearchParams();
+        formData.append('customer_name', orderData.customer_name);
+        formData.append('first_name', orderData.first_name);
+        formData.append('last_name', orderData.last_name);
+        if (orderData.order_note) {
+            formData.append('order_note', orderData.order_note);
+        }
+        formData.append('items', JSON.stringify(orderData.items));
         
-        hideCheckoutConfirm();
-        showToast('Siparişiniz başarıyla alındı! ' + methodText + ' ile ödeyeceksiniz.', 'success');
+        console.log('Sipariş gönderiliyor:', orderData);
         
-        // 3 saniye sonra sepeti temizle
-        setTimeout(() => {
-            orderCart = [];
-            localStorage.removeItem('orderCart');
-            localStorage.removeItem('pendingOrder');
-            updateOrderUI();
-            toggleOrderPanel();
+        const response = await fetch('../api/orders/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        console.log('API Yanıtı:', result);
+        
+        if (result.success) {
+            hideCheckoutConfirm();
+            const tableInfo = result.data && result.data.table_number 
+                ? ` Masa: ${result.data.table_number}` 
+                : '';
+            showToast('Siparişiniz başarıyla oluşturuldu!' + tableInfo + ' Ödeme personel tarafından alınacaktır.', 'success');
             
-            // Formu sıfırla
-            document.getElementById('tableNumber').value = '';
-            document.getElementById('orderNote').value = '';
-            // Ödeme yöntemlerinin seçimini kaldır
-            document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => radio.checked = false);
-        }, 400);
-    } else {
-        // Mobil ödeme - ödeme sayfasına yönlendir
-        hideCheckoutConfirm();
-        window.location.href = 'payment.php?method=' + paymentMethod;
+            // Sepeti temizle
+            setTimeout(() => {
+                orderCart = [];
+                localStorage.removeItem('orderCart');
+                updateOrderUI();
+                toggleOrderPanel();
+                
+                // Formu sıfırla
+                document.getElementById('customerName').value = '';
+                document.getElementById('orderNote').value = '';
+            }, 2000);
+        } else {
+            console.error('Sipariş hatası:', result.message);
+            showToast(result.message || 'Sipariş oluşturulamadı!', 'error');
+        }
+    } catch (error) {
+        console.error('Sipariş hatası:', error);
+        showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
     }
 }
 </script>

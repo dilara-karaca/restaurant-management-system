@@ -77,11 +77,58 @@ try {
     }
     
     echo "<hr>";
-    echo "<h3>✨ Kurulum Tamamlandı!</h3>";
+    echo "<h3>✨ Veritabanı Kurulumu Tamamlandı!</h3>";
     echo "<p>$successCount / " . count($queries) . " komut başarıyla çalıştırıldı.</p>";
-    echo "<p><a href='admin/login.php'>👉 Admin Paneline Git</a></p>";
     
-    // Varsayılan hesapları göster
+    // Post-setup kontrollerini yap
+    echo "<hr>";
+    echo "<h3>🔧 Post-Setup Kontrolleri</h3>";
+    echo "<p>Trigger'lar ve ürün içerikleri kontrol ediliyor...</p>";
+    
+    try {
+        require_once __DIR__ . '/includes/cruds.php';
+        $crud = new CRUD();
+        
+        // Trigger kontrolü
+        $triggers = $crud->customQuery("SHOW TRIGGERS LIKE 'OrderDetails'");
+        $triggerCount = count($triggers);
+        if ($triggerCount >= 3) {
+            echo "<p style='color: green;'>✅ Trigger'lar kurulu ($triggerCount adet)</p>";
+        } else {
+            echo "<p style='color: orange;'>⚠️ Eksik trigger'lar olabilir. Post-setup script'ini çalıştırın.</p>";
+        }
+        
+        // İçerik kontrolü
+        $productsWithoutIngredients = $crud->customQuery("
+            SELECT COUNT(*) as count
+            FROM MenuProducts mp
+            LEFT JOIN ProductIngredients pi ON mp.product_id = pi.product_id
+            GROUP BY mp.product_id
+            HAVING COUNT(pi.ingredient_id) = 0
+        ");
+        
+        $missingCount = count($productsWithoutIngredients);
+        if ($missingCount == 0) {
+            echo "<p style='color: green;'>✅ Tüm ürünlerin içeriği tanımlı</p>";
+        } else {
+            echo "<p style='color: orange;'>⚠️ $missingCount ürünün içeriği eksik. Post-setup script'ini çalıştırın.</p>";
+        }
+        
+    } catch (Exception $e) {
+        echo "<p style='color: orange;'>⚠️ Post-setup kontrolleri yapılamadı: " . htmlspecialchars($e->getMessage()) . "</p>";
+    }
+    
+    echo "<hr>";
+    echo "<h3>📝 Sonraki Adımlar</h3>";
+    echo "<ol>";
+    echo "<li><strong>Post-Setup Kontrolleri:</strong> <a href='post_setup.php' style='color: #3b82f6;'>post_setup.php</a> dosyasını çalıştırın</li>";
+    echo "<li>Eksik ürün içerikleri varsa otomatik olarak eklenecektir</li>";
+    echo "<li>Kurulum tamamlandıktan sonra sistemi kullanabilirsiniz</li>";
+    echo "</ol>";
+    
+    echo "<p><a href='post_setup.php' style='display: inline-block; padding: 10px 20px; background: #10b981; color: white; text-decoration: none; border-radius: 4px; margin: 10px 0;'>🔧 Post-Setup Kontrollerini Çalıştır</a></p>";
+    
+    echo "<hr>";
     echo "<h3>📝 Varsayılan Hesaplar:</h3>";
     echo "<ul>";
     echo "<li><strong>Admin</strong> - Kullanıcı: admin | Şifre: password</li>";
@@ -89,6 +136,8 @@ try {
     echo "<li><strong>Waiter</strong> - Kullanıcı: waiter1 | Şifre: password</li>";
     echo "<li><strong>Customer</strong> - Kullanıcı: customer1 | Şifre: password</li>";
     echo "</ul>";
+    
+    echo "<p><a href='admin/login.php'>👉 Admin Paneline Git</a></p>";
     
 } catch (PDOException $e) {
     die("❌ Veritabanı hatası: " . htmlspecialchars($e->getMessage()));

@@ -124,8 +124,6 @@ include __DIR__ . '/../includes/layout/top.php';
                                     style="background: #10b981;"></span>Boş</span>
                             <span class="legend-item"><span class="legend-dot"
                                     style="background: #ef4444;"></span>Dolu</span>
-                            <span class="legend-item"><span class="legend-dot"
-                                    style="background: #f59e0b;"></span>Rezerve</span>
                         </div>
                     </div>
 
@@ -133,22 +131,11 @@ include __DIR__ . '/../includes/layout/top.php';
                     <div class="floor-section">
                         <h4 class="section-title">Ana Salon</h4>
                         <div class="floor-container">
-                            <div class="floor-grid main-section">
-                                <div class="table occupied">M1</div>
-                                <div class="table">M2</div>
-                                <div class="table reserved">M3</div>
-                                <div class="table">M4</div>
-                                <div class="table occupied">M5</div>
-                                <div class="table reserved">M6</div>
-                                <div class="table occupied">M7</div>
-                                <div class="table">M8</div>
-                                <div class="table occupied">M9</div>
-                                <div class="table">M10</div>
-                                <div class="table occupied">M11</div>
-                                <div class="table reserved">M12</div>
-                                <div class="table occupied">M13</div>
-                                <div class="table">M14</div>
-                                <div class="table occupied">M15</div>
+                            <div class="floor-grid main-section" id="mainSectionTables">
+                                <!-- Masalar buraya dinamik olarak yüklenecek -->
+                                <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--muted);">
+                                    Yükleniyor...
+                                </div>
                             </div>
                             <div class="door-divider">GİRİŞ</div>
                         </div>
@@ -159,17 +146,8 @@ include __DIR__ . '/../includes/layout/top.php';
 
                     <!-- Bahçe Bölümü -->
                     <div class="floor-section">
-                        <div class="floor-grid garden-section">
-                            <div class="table">B1</div>
-                            <div class="table reserved">B2</div>
-                            <div class="table">B3</div>
-                            <div class="table occupied">B4</div>
-                            <div class="table">B5</div>
-                            <div class="table occupied">B6</div>
-                            <div class="table">B7</div>
-                            <div class="table occupied">B8</div>
-                            <div class="table">B9</div>
-                            <div class="table occupied">B10</div>
+                        <div class="floor-grid garden-section" id="gardenSectionTables">
+                            <!-- Masalar buraya dinamik olarak yüklenecek -->
                         </div>
                     </div>
                 </div>
@@ -253,7 +231,6 @@ include __DIR__ . '/../includes/layout/top.php';
             <!-- Action Buttons -->
             <div class="action-buttons">
                 <button class="btn btn--primary btn--large">Sipariş Ekle</button>
-                <button class="btn btn--secondary btn--large">Rezervasyon Ekle</button>
                 <button class="btn btn--ghost btn--large">Sorun Bildir</button>
             </div>
         </div>
@@ -265,30 +242,8 @@ include __DIR__ . '/../includes/layout/top.php';
     <div class="modal-content">
         <button class="modal-close">&times;</button>
 
-        <!-- Rezervasyon Panel (Sarı masalar için) -->
-        <div id="reservationPanel" class="modal-panel">
-            <h3>Rezervasyon Bilgisi</h3>
-            <div class="panel-info">
-                <div class="info-row">
-                    <span class="info-label">Masa No:</span>
-                    <span id="reservTableNo" class="info-value">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Müşteri Adı:</span>
-                    <span id="reservCustomerName" class="info-value">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Rezervasyon Saati:</span>
-                    <span id="reservTime" class="info-value">-</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Kişi Sayısı:</span>
-                    <span id="reservPersonCount" class="info-value">-</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Sipariş Panel (Yeşil masalar için) -->
+        <!-- Sipariş Panel (Kırmızı masalar için - Ödeme) -->
         <div id="orderPanel" class="modal-panel">
             <h3>Sipariş Detayı</h3>
             <div class="panel-info">
@@ -296,24 +251,55 @@ include __DIR__ . '/../includes/layout/top.php';
                     <span class="info-label">Masa No:</span>
                     <span id="orderTableNo" class="info-value">-</span>
                 </div>
+                <div class="info-row">
+                    <span class="info-label">Müşteri:</span>
+                    <span id="orderCustomerName" class="info-value">-</span>
+                </div>
             </div>
-            <div class="orders-list">
-                <div class="order-item">
-                    <span class="order-name">Adana Kebap</span>
-                    <span class="order-qty">x1</span>
-                    <span class="order-price">₺145</span>
-                </div>
-                <div class="order-item">
-                    <span class="order-name">Ayran</span>
-                    <span class="order-qty">x2</span>
-                    <span class="order-price">₺30</span>
-                </div>
+            <div class="orders-list" id="orderItemsList">
+                <!-- Sipariş kalemleri buraya dinamik olarak eklenecek -->
             </div>
             <div class="order-total">
                 <span>Toplam:</span>
-                <span>₺175</span>
+                <span id="orderTotalAmount">₺0.00</span>
             </div>
-            <button class="btn btn--primary btn--block" style="margin-top: 16px;">💳 Ödemeyi Al</button>
+            <div class="form-group" style="margin-top: 16px;">
+                <label>Ödeme Yöntemi *</label>
+                <select id="paymentMethodSelect" class="form-input">
+                    <option value="">Seçiniz</option>
+                    <option value="Cash">Nakit</option>
+                    <option value="Credit Card">Kredi Kartı</option>
+                    <option value="Debit Card">Banka Kartı</option>
+                    <option value="Mobile Payment">Mobil Ödeme</option>
+                </select>
+            </div>
+            <button id="completePaymentBtn" class="btn btn--primary btn--block" style="margin-top: 16px;">💳 Ödemeyi Al</button>
+        </div>
+
+        <!-- Sipariş Bilgi Panel (Yeşil/Sarı masalar için) -->
+        <div id="orderInfoPanel" class="modal-panel">
+            <h3>Sipariş Bilgisi</h3>
+            <div class="panel-info">
+                <div class="info-row">
+                    <span class="info-label">Masa No:</span>
+                    <span id="infoTableNo" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Müşteri:</span>
+                    <span id="infoCustomerName" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Durum:</span>
+                    <span id="infoOrderStatus" class="info-value">-</span>
+                </div>
+            </div>
+            <div class="orders-list" id="infoOrderItemsList">
+                <!-- Sipariş kalemleri buraya dinamik olarak eklenecek -->
+            </div>
+            <div class="order-total">
+                <span>Toplam:</span>
+                <span id="infoTotalAmount">₺0.00</span>
+            </div>
         </div>
 
         <!-- Personel Panel -->
@@ -389,37 +375,6 @@ include __DIR__ . '/../includes/layout/top.php';
             </div>
         </div>
 
-        <!-- Rezervasyon Panel (Masa Seçimi) -->
-        <div id="reservationCreatePanel" class="modal-panel">
-            <h3>Rezervasyon Ekle - Masa Seçin</h3>
-            <div class="tables-selection">
-                <div id="emptyTableSelectionContainer" class="tables-grid">
-                </div>
-            </div>
-        </div>
-
-        <!-- Rezervasyon Formu Panel -->
-        <div id="reservationFormPanel" class="modal-panel">
-            <div class="form-header">
-                <button id="backToEmptyTables" class="btn btn--secondary btn--small">←</button>
-                <h3 id="selectedEmptyTableDisplay">Masa Seçin</h3>
-            </div>
-            <form id="reservationForm" class="reservation-form">
-                <div class="form-group">
-                    <label for="customerName">Müşteri Adı *</label>
-                    <input type="text" id="customerName" name="customerName" required placeholder="Müşteri adını girin">
-                </div>
-                <div class="form-group">
-                    <label for="reservationTime">Rezervasyon Saati *</label>
-                    <input type="time" id="reservationTime" name="reservationTime" required>
-                </div>
-                <div class="form-group">
-                    <label for="personCount">Kişi Sayısı *</label>
-                    <input type="number" id="personCount" name="personCount" min="1" required placeholder="1">
-                </div>
-                <button type="submit" class="btn btn--primary btn--block">Rezervasyon Oluştur</button>
-            </form>
-        </div>
     </div>
 </div>
 
@@ -428,33 +383,289 @@ include __DIR__ . '/../includes/layout/bottom.php';
 ?>
 
 <script>
-    // Tablo veri depolama
-    const tableData = {
-        'M1': { type: 'order', order: 'Tavuk Şiş x2, Pilav, Salata' },
-        'M5': { type: 'order', order: 'Beyti Kebap, Garnitür' },
-        'M7': { type: 'order', order: 'Lahmacun x4, Ayran x2' },
-        'M9': { type: 'order', order: 'Urfa Kebap x1, Çay x2' },
-        'M11': { type: 'order', order: 'Kelle Paça Çorbası, Tost' },
-        'M13': { type: 'order', order: 'Manti, Böbrek, Limonata' },
-        'M15': { type: 'order', order: 'Döner Kebap, Meyve Suyu' },
-        'B4': { type: 'order', order: 'İçli Köfte, Ayran' },
-        'B6': { type: 'order', order: 'Cigkofte, Limonata' },
-        'B8': { type: 'order', order: 'Hamsi Tava, Ayran' },
-        'B10': { type: 'order', order: 'Karides Güveç, Çay' },
-        'M3': { type: 'reserved', customerName: 'Ahmet Yılmaz', reservTime: '19:30' },
-        'M6': { type: 'reserved', customerName: 'Fatma Kaya', reservTime: '20:00' },
-        'M12': { type: 'reserved', customerName: 'Ali Demir', reservTime: '21:15' },
-        'B2': { type: 'reserved', customerName: 'Zeynep Çelik', reservTime: '19:45' }
-    };
+    // API Base URL
+    const apiBase = '../api';
+    let tablesData = {};
+    let currentOrderId = null;
 
     // Modal elemanları
     const tableModal = document.getElementById('tableModal');
     const modalClose = document.querySelector('.modal-close');
-    const reservationPanel = document.getElementById('reservationPanel');
     const orderPanel = document.getElementById('orderPanel');
+    const orderInfoPanel = document.getElementById('orderInfoPanel');
     const staffPanel = document.getElementById('staffPanel');
     const staffCard = document.getElementById('staffCard');
     const activeStaffCount = document.getElementById('activeStaffCount');
+    const completePaymentBtn = document.getElementById('completePaymentBtn');
+    const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+
+    // Fetch helper
+    async function fetchJson(url, options = {}) {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.message || 'Bir hata oluştu');
+        }
+        return data;
+    }
+
+    // Masaları yükle
+    async function loadTables() {
+        try {
+            const data = await fetchJson(`${apiBase}/tables/list.php`);
+            tablesData = {};
+            
+            // Masaları table_number ve location'a göre indexle
+            data.data.forEach(table => {
+                // Location'a göre prefix belirle
+                let prefix = 'M';
+                if (table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden'))) {
+                    prefix = 'B';
+                }
+                const tableKey = `${prefix}${table.table_number}`;
+                tablesData[tableKey] = table;
+            });
+            
+            renderTables();
+            updateOrdersList();
+            updateStats();
+        } catch (error) {
+            console.error('Masalar yüklenemedi:', error);
+        }
+    }
+
+    // Masaları render et
+    function renderTables() {
+        const mainSection = document.getElementById('mainSectionTables');
+        const gardenSection = document.getElementById('gardenSectionTables');
+        
+        if (!mainSection || !gardenSection) return;
+        
+        mainSection.innerHTML = '';
+        gardenSection.innerHTML = '';
+        
+        // Ana salon masaları (M1-M15)
+        for (let i = 1; i <= 15; i++) {
+            const tableKey = `M${i}`;
+            const table = tablesData[tableKey];
+            const tableElement = createTableElement(tableKey, table);
+            mainSection.appendChild(tableElement);
+        }
+        
+        // Bahçe masaları (B1-B10)
+        for (let i = 1; i <= 10; i++) {
+            const tableKey = `B${i}`;
+            const table = tablesData[tableKey];
+            const tableElement = createTableElement(tableKey, table);
+            gardenSection.appendChild(tableElement);
+        }
+        
+        // Event listener'ları ekle
+        attachTableListeners();
+    }
+
+    // Masa elementi oluştur
+    function createTableElement(tableKey, table) {
+        const div = document.createElement('div');
+        div.className = 'table';
+        div.dataset.tableKey = tableKey;
+        div.dataset.tableId = table ? table.table_id : '';
+        div.textContent = tableKey;
+        
+        if (table) {
+            if (table.status === 'Occupied') {
+                div.classList.add('occupied');
+            }
+            // Reserved durumu artık kullanılmıyor
+        }
+        
+        return div;
+    }
+
+    // Masa event listener'larını ekle
+    function attachTableListeners() {
+        document.querySelectorAll('.table').forEach(table => {
+            // Eski listener'ı kaldır
+            table.replaceWith(table.cloneNode(true));
+        });
+        
+        document.querySelectorAll('.table').forEach(table => {
+            table.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const tableKey = this.dataset.tableKey;
+                const table = tablesData[tableKey];
+                
+                if (!table) return;
+                
+                tableModal.classList.add('active');
+                
+                if (table.status === 'Occupied') {
+                    // Kırmızı masa - Ödeme paneli
+                    showPaymentPanel(table);
+                } else {
+                    // Yeşil masa - Sipariş bilgi paneli (eğer sipariş varsa)
+                    showOrderInfoPanel(table);
+                }
+            });
+        });
+    }
+
+    // Ödeme panelini göster (Kırmızı masalar)
+    function showPaymentPanel(table) {
+        if (orderInfoPanel) orderInfoPanel.style.display = 'none';
+        if (orderPanel) orderPanel.style.display = 'block';
+        if (staffPanel) staffPanel.style.display = 'none';
+        
+        const tableKey = table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden')) 
+            ? `B${table.table_number}` 
+            : `M${table.table_number}`;
+        
+        document.getElementById('orderTableNo').textContent = tableKey;
+        document.getElementById('orderCustomerName').textContent = table.customer_name || '-';
+        
+        const itemsList = document.getElementById('orderItemsList');
+        itemsList.innerHTML = '';
+        
+        if (table.items && table.items.length > 0) {
+            table.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'order-item';
+                itemDiv.innerHTML = `
+                    <span class="order-name">${item.product_name}</span>
+                    <span class="order-qty">x${item.quantity}</span>
+                    <span class="order-price">₺${parseFloat(item.subtotal).toFixed(2)}</span>
+                `;
+                itemsList.appendChild(itemDiv);
+            });
+        } else {
+            itemsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">Sipariş kalemi bulunamadı</div>';
+        }
+        
+        document.getElementById('orderTotalAmount').textContent = `₺${parseFloat(table.total_amount || 0).toFixed(2)}`;
+        currentOrderId = table.order_id;
+        if (paymentMethodSelect) paymentMethodSelect.value = '';
+    }
+
+
+    // Sipariş bilgi panelini göster (Yeşil masalar)
+    function showOrderInfoPanel(table) {
+        if (!orderInfoPanel) return;
+        
+        if (orderPanel) orderPanel.style.display = 'none';
+        orderInfoPanel.style.display = 'block';
+        if (staffPanel) staffPanel.style.display = 'none';
+        
+        const tableKey = table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden')) 
+            ? `B${table.table_number}` 
+            : `M${table.table_number}`;
+        
+        document.getElementById('infoTableNo').textContent = tableKey;
+        document.getElementById('infoCustomerName').textContent = table.customer_name || '-';
+        document.getElementById('infoOrderStatus').textContent = table.order_status || '-';
+        
+        const itemsList = document.getElementById('infoOrderItemsList');
+        itemsList.innerHTML = '';
+        
+        if (table.items && table.items.length > 0) {
+            table.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'order-item';
+                itemDiv.innerHTML = `
+                    <span class="order-name">${item.product_name}</span>
+                    <span class="order-qty">x${item.quantity}</span>
+                    <span class="order-price">₺${parseFloat(item.subtotal).toFixed(2)}</span>
+                `;
+                itemsList.appendChild(itemDiv);
+            });
+        } else {
+            itemsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">Bu masada aktif sipariş yok</div>';
+        }
+        
+        document.getElementById('infoTotalAmount').textContent = `₺${parseFloat(table.total_amount || 0).toFixed(2)}`;
+    }
+
+    // Ödeme tamamla
+    if (completePaymentBtn) {
+        completePaymentBtn.addEventListener('click', async function() {
+            if (!currentOrderId) {
+                alert('Sipariş bulunamadı');
+                return;
+            }
+            
+            const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
+            if (!paymentMethod) {
+                alert('Lütfen ödeme yöntemi seçiniz');
+                return;
+            }
+            
+            if (!confirm('Ödemeyi tamamlamak istediğinizden emin misiniz?')) {
+                return;
+            }
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('order_id', currentOrderId);
+                formData.append('payment_method', paymentMethod);
+                
+                await fetchJson(`${apiBase}/orders/complete_payment.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                alert('Ödeme başarıyla alındı!');
+                tableModal.classList.remove('active');
+                loadTables(); // Masaları yeniden yükle
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        });
+    }
+
+    // Sipariş listesini güncelle
+    function updateOrdersList() {
+        const ordersList = document.getElementById('ordersList');
+        if (!ordersList) return;
+        
+        ordersList.innerHTML = '';
+        
+        Object.values(tablesData).forEach(table => {
+            if (table.status === 'Occupied' && table.items && table.items.length > 0) {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'order-request-item';
+                const tableKey = table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden')) 
+                    ? `B${table.table_number}` 
+                    : `M${table.table_number}`;
+                const itemsText = table.items.map(item => `${item.product_name} x${item.quantity}`).join(', ');
+                
+                orderDiv.innerHTML = `
+                    <div class="order-details">
+                        <span class="order-table">${tableKey}</span>
+                    </div>
+                    <span class="order-request">${itemsText}</span>
+                `;
+                ordersList.appendChild(orderDiv);
+            }
+        });
+        
+        if (ordersList.children.length === 0) {
+            ordersList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">Aktif sipariş yok</div>';
+        }
+    }
+
+    // İstatistikleri güncelle
+    function updateStats() {
+        const occupiedCount = Object.values(tablesData).filter(t => t.status === 'Occupied').length;
+        const totalTables = Object.keys(tablesData).length;
+        const statValue = document.querySelector('.stat-card:nth-child(3) .stat-value');
+        if (statValue && totalTables > 0) {
+            statValue.textContent = `${occupiedCount} / ${totalTables}`;
+            const progressFill = document.querySelector('.stat-card:nth-child(3) .progress-fill');
+            if (progressFill) {
+                progressFill.style.width = `${(occupiedCount / totalTables) * 100}%`;
+            }
+        }
+    }
 
     // Aktif garson sayısını güncelle
     function updateStaffCount() {
@@ -463,14 +674,16 @@ include __DIR__ . '/../includes/layout/bottom.php';
     }
 
     // Personel kartına tıklama
-    staffCard.addEventListener('click', function (e) {
-        e.stopPropagation();
-        tableModal.classList.add('active');
+    if (staffCard) {
+        staffCard.addEventListener('click', function (e) {
+            e.stopPropagation();
+            tableModal.classList.add('active');
 
-        reservationPanel.style.display = 'none';
-        orderPanel.style.display = 'none';
-        staffPanel.style.display = 'block';
-    });
+            if (orderPanel) orderPanel.style.display = 'none';
+            if (orderInfoPanel) orderInfoPanel.style.display = 'none';
+            staffPanel.style.display = 'block';
+        });
+    }
 
     // Garson isimlerine tıklama olayı - durumu değiştir
     document.querySelectorAll('.staff-name').forEach(staffName => {
@@ -487,43 +700,11 @@ include __DIR__ . '/../includes/layout/bottom.php';
         });
     });
 
-    // Masalara tıklama olayı - sadece yeşil ve sarı masalara
-    document.querySelectorAll('.table:not(.occupied)').forEach(table => {
-        table.addEventListener('click', function (e) {
-            e.stopPropagation();
-            const tableNo = this.textContent.trim();
-            const isReserved = this.classList.contains('reserved');
-
-            // Modal'ı göster
-            tableModal.classList.add('active');
-
-            if (isReserved) {
-                // Rezervasyon panelini göster
-                reservationPanel.style.display = 'block';
-                orderPanel.style.display = 'none';
-                staffPanel.style.display = 'none';
-
-                const data = tableData[tableNo] || {};
-                document.getElementById('reservTableNo').textContent = tableNo;
-                document.getElementById('reservCustomerName').textContent = data.customerName || '-';
-                document.getElementById('reservTime').textContent = data.reservTime || '-';
-            } else {
-                // Sipariş panelini göster (yeşil masalar için)
-                reservationPanel.style.display = 'none';
-                orderPanel.style.display = 'block';
-                staffPanel.style.display = 'none';
-
-                document.getElementById('orderTableNo').textContent = tableNo;
-                const data = tableData[tableNo] || {};
-                const orderContent = document.querySelector('.order-item');
-                if (orderContent && data.order) {
-                    orderContent.innerHTML = `
-                    <span class="order-name">${data.order}</span>
-                    <span class="order-price">Göster</span>
-                `;
-                }
-            }
-        });
+    // Sayfa yüklendiğinde masaları yükle
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTables();
+        // Her 10 saniyede bir masaları güncelle
+        setInterval(loadTables, 10000);
     });
 
     // Modal kapatma
