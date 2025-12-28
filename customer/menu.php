@@ -8,7 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT category_id, category_name FROM MenuCategories ORDER BY category_id";
+$query = "SELECT category_id, category_name, display_order FROM MenuCategories ORDER BY display_order ASC, category_id ASC";
 $stmt = $db->prepare($query);
 $stmt->execute();
 $allCats = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -19,6 +19,11 @@ $data = [
     'Main Courses' => ['Ana Yemekler', '../assets/images/categories/main-courses.webp', 3, '#45B7D1'],
     'Desserts' => ['Tatlılar', '../assets/images/categories/desserts.webp', 4, '#FFA07A'],
     'Beverages' => ['İçecekler', '../assets/images/categories/beverages.webp', 5, '#98D8C8'],
+    'Başlangıçlar' => ['Başlangıçlar', '../assets/images/categories/appetizers.jpeg', 1, '#FF6B6B'],
+    'Çorbalar' => ['Çorbalar', '../assets/images/categories/soups.webp', 2, '#4ECDC4'],
+    'Ana Yemekler' => ['Ana Yemekler', '../assets/images/categories/main-courses.webp', 3, '#45B7D1'],
+    'Tatlılar' => ['Tatlılar', '../assets/images/categories/desserts.webp', 4, '#FFA07A'],
+    'İçecekler' => ['İçecekler', '../assets/images/categories/beverages.webp', 5, '#98D8C8'],
 ];
 
 $categories = [];
@@ -30,8 +35,17 @@ foreach ($allCats as $cat) {
             'category_name' => $cat['category_name'],
             'tr_name' => $info[0],
             'icon' => $info[1],
-            'order' => $info[2],
+            'order' => $cat['display_order'] ?? $info[2],
             'color' => $info[3],
+        ];
+    } else {
+        $categories[] = [
+            'category_id' => $cat['category_id'],
+            'category_name' => $cat['category_name'],
+            'tr_name' => $cat['category_name'],
+            'icon' => '../assets/images/serving-dishes.png',
+            'order' => $cat['display_order'] ?? 999,
+            'color' => '#94a3b8',
         ];
     }
 }

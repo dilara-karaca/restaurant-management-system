@@ -3,6 +3,7 @@
     if (!ordersTableBody) return;
 
     const apiBase = '/Restaurant-Management-System/api/orders';
+    const menuApi = '/Restaurant-Management-System/api/menu/list.php';
 
     const notice = document.getElementById('ordersNotice');
     const unassignedNotice = document.getElementById('unassignedNotice');
@@ -17,14 +18,22 @@
     const orderMetaDate = document.getElementById('orderMetaDate');
     const orderStatusSelect = document.getElementById('orderStatusSelect');
     const updateStatusBtn = document.getElementById('updateStatusBtn');
+    const orderTableSelect = document.getElementById('orderTableSelect');
+    const updateTableBtn = document.getElementById('updateTableBtn');
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+    const completePaymentBtn = document.getElementById('completePaymentBtn');
     const orderItemsList = document.getElementById('orderItemsList');
     const orderTotalValue = document.getElementById('orderTotalValue');
+    const addItemProduct = document.getElementById('addItemProduct');
+    const addItemQty = document.getElementById('addItemQty');
+    const addItemBtn = document.getElementById('addItemBtn');
     const unassignedOrdersTableBody = document.getElementById('unassignedOrdersTableBody');
 
     let orders = [];
     let unassignedOrders = [];
     let activeOrderId = null;
+    let menuItems = [];
+    let tables = [];
 
     const statusLabels = {
         Pending: 'Beklemede',
@@ -60,6 +69,24 @@
         });
     };
 
+    const isGardenLocation = (location) => {
+        if (!location) return false;
+        const normalized = location.toLowerCase();
+        return normalized.includes('bahçe') || normalized.includes('bahce') || normalized.includes('garden');
+    };
+
+    const getDisplayNumber = (table) => {
+        if (!table) return '';
+        if (isGardenLocation(table.location) && Number(table.table_number) > 15) {
+            return Number(table.table_number) - 15;
+        }
+        return table.table_number;
+    };
+
+    const getTableLabel = (table) => {
+        const prefix = isGardenLocation(table.location) ? 'B' : 'M';
+        return `${prefix}${getDisplayNumber(table)}`;
+    };
     const showNotice = (target, message, type = 'success') => {
         if (!target) return;
         target.textContent = message;
@@ -164,14 +191,34 @@
             return;
         }
 
+        const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
+        const optionsHtml = menuItems.map((item) => `
+            <option value="${item.product_id}">${item.product_name}</option>
+        `).join('');
+
         orderItemsList.innerHTML = order.items.map((item) => `
-            <div class="order-item-row">
-                <span>${item.product_name}</span>
-                <span>${item.quantity}</span>
+            <div class="order-item-row" data-detail-id="${item.order_detail_id}">
+                <select class="input order-item-product" ${isFinal ? 'disabled' : ''}>
+                    ${optionsHtml}
+                </select>
+                <input class="input order-item-qty" type="number" min="1" value="${item.quantity}" ${isFinal ? 'disabled' : ''}>
                 <span>${formatCurrency(item.unit_price)}</span>
                 <span>${formatCurrency(item.subtotal)}</span>
+                <div class="order-item-actions">
+                    <button class="btn btn--secondary btn--small" data-action="update-item" data-detail-id="${item.order_detail_id}" ${isFinal ? 'disabled' : ''}>Güncelle</button>
+                    <button class="btn btn--ghost btn--small" data-action="delete-item" data-detail-id="${item.order_detail_id}" ${isFinal ? 'disabled' : ''}>Sil</button>
+                </div>
             </div>
         `).join('');
+
+        order.items.forEach((item) => {
+            const row = orderItemsList.querySelector(`[data-detail-id="${item.order_detail_id}"]`);
+            if (!row) return;
+            const select = row.querySelector('.order-item-product');
+            if (select) {
+                select.value = item.product_id;
+            }
+        });
     };
 
     const openModal = (orderId) => {
@@ -188,6 +235,24 @@
             paymentMethodSelect.value = order.payment_method || '';
         }
         orderTotalValue.textContent = formatCurrency(order.total_amount);
+
+        if (completePaymentBtn) {
+            const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
+            completePaymentBtn.disabled = isFinal;
+            completePaymentBtn.textContent = isFinal ? 'Ödeme Tamamlandı' : 'Ödemeyi Tamamla';
+        }
+
+        const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
+        if (addItemProduct) addItemProduct.disabled = isFinal;
+        if (addItemQty) addItemQty.disabled = isFinal;
+        if (addItemBtn) addItemBtn.disabled = isFinal;
+        if (orderTableSelect) {
+            orderTableSelect.disabled = isFinal;
+            orderTableSelect.value = order.table_id || '';
+        }
+        if (updateTableBtn) {
+            updateTableBtn.disabled = isFinal;
+        }
 
         renderOrderItems(order);
         modal.classList.add('active');
@@ -209,6 +274,23 @@
         }
     };
 
+    const loadMenuItems = async () => {
+        try {
+            const data = await fetchJson(menuApi);
+            menuItems = data.data || [];
+            if (addItemProduct) {
+                if (!menuItems.length) {
+                    addItemProduct.innerHTML = '<option value="">Menü bulunamadı</option>';
+                } else {
+                    addItemProduct.innerHTML = menuItems.map((item) => `
+                        <option value="${item.product_id}">${item.product_name}</option>
+                    `).join('');
+                }
+            }
+        } catch (error) {
+            showNotice(notice, error.message, 'error');
+        }
+    };
     const loadUnassignedOrders = async () => {
         if (!unassignedOrdersTableBody) return;
         try {
@@ -220,6 +302,25 @@
         }
     };
 
+    const loadTables = async () => {
+        if (!orderTableSelect) return;
+        try {
+            const data = await fetchJson('/Restaurant-Management-System/api/tables/list.php');
+            tables = data.data || [];
+            if (!tables.length) {
+                orderTableSelect.innerHTML = '<option value="">Masa bulunamadı</option>';
+                return;
+            }
+            const options = tables.map((table) => {
+                const location = table.location ? ` - ${table.location}` : '';
+                const label = `${getTableLabel(table)} (${table.capacity} kişi)${location}`;
+                return `<option value="${table.table_id}">${label}</option>`;
+            }).join('');
+            orderTableSelect.innerHTML = options;
+        } catch (error) {
+            showNotice(notice, error.message, 'error');
+        }
+    };
     const updateOrderStatus = async () => {
         if (!activeOrderId) return;
         const status = orderStatusSelect.value;
@@ -241,6 +342,32 @@
             await loadUnassignedOrders();
             openModal(activeOrderId);
             showNotice(notice, 'Sipariş durumu güncellendi.');
+        } catch (error) {
+            showNotice(notice, error.message, 'error');
+        }
+    };
+
+    const completePayment = async () => {
+        if (!activeOrderId) return;
+        const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
+        if (!paymentMethod) {
+            showNotice(notice, 'Lütfen ödeme yöntemi seçin.', 'error');
+            return;
+        }
+        if (!window.confirm('Ödemeyi tamamlamak istediğinizden emin misiniz?')) return;
+        try {
+            await fetchJson(`${apiBase}/complete_payment.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    order_id: activeOrderId,
+                    payment_method: paymentMethod
+                })
+            });
+            await loadOrders();
+            await loadUnassignedOrders();
+            openModal(activeOrderId);
+            showNotice(notice, 'Ödeme başarıyla alındı.');
         } catch (error) {
             showNotice(notice, error.message, 'error');
         }
@@ -290,6 +417,120 @@
         updateStatusBtn.addEventListener('click', updateOrderStatus);
     }
 
+    if (completePaymentBtn) {
+        completePaymentBtn.addEventListener('click', completePayment);
+    }
+
+    if (updateTableBtn) {
+        updateTableBtn.addEventListener('click', async () => {
+            if (!activeOrderId) return;
+            const tableId = parseInt(orderTableSelect.value, 10);
+            if (!tableId) {
+                showNotice(notice, 'Geçerli bir masa seçin.', 'error');
+                return;
+            }
+            try {
+                await fetchJson(`${apiBase}/update_table.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        order_id: activeOrderId,
+                        table_id: tableId
+                    })
+                });
+                await loadOrders();
+                await loadUnassignedOrders();
+                openModal(activeOrderId);
+                showNotice(notice, 'Masa güncellendi.');
+            } catch (error) {
+                showNotice(notice, error.message, 'error');
+            }
+        });
+    }
+    if (orderItemsList) {
+        orderItemsList.addEventListener('click', async (event) => {
+            const button = event.target.closest('[data-action]');
+            if (!button) return;
+            const action = button.dataset.action;
+            const detailId = parseInt(button.dataset.detailId, 10);
+            if (!detailId || !activeOrderId) return;
+
+            if (action === 'delete-item') {
+                if (!window.confirm('Bu ürünü siparişten kaldırmak istiyor musunuz?')) return;
+                try {
+                    await fetchJson(`${apiBase}/delete_item.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ order_detail_id: detailId })
+                    });
+                    await loadOrders();
+                    openModal(activeOrderId);
+                    showNotice(notice, 'Ürün siparişten kaldırıldı.');
+                } catch (error) {
+                    showNotice(notice, error.message, 'error');
+                }
+                return;
+            }
+
+            if (action === 'update-item') {
+                const row = orderItemsList.querySelector(`[data-detail-id="${detailId}"]`);
+                if (!row) return;
+                const productSelect = row.querySelector('.order-item-product');
+                const qtyInput = row.querySelector('.order-item-qty');
+                const quantity = parseInt(qtyInput.value, 10);
+                const productId = parseInt(productSelect.value, 10);
+                if (!quantity || quantity <= 0 || !productId) {
+                    showNotice(notice, 'Geçerli bir ürün ve miktar seçin.', 'error');
+                    return;
+                }
+                try {
+                    await fetchJson(`${apiBase}/update_item.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({
+                            order_detail_id: detailId,
+                            quantity,
+                            product_id: productId
+                        })
+                    });
+                    await loadOrders();
+                    openModal(activeOrderId);
+                    showNotice(notice, 'Sipariş kalemi güncellendi.');
+                } catch (error) {
+                    showNotice(notice, error.message, 'error');
+                }
+            }
+        });
+    }
+
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', async () => {
+            if (!activeOrderId) return;
+            const productId = parseInt(addItemProduct.value, 10);
+            const quantity = parseInt(addItemQty.value, 10);
+            if (!productId || !quantity || quantity <= 0) {
+                showNotice(notice, 'Geçerli bir ürün ve miktar seçin.', 'error');
+                return;
+            }
+            try {
+                await fetchJson(`${apiBase}/add_item.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        order_id: activeOrderId,
+                        product_id: productId,
+                        quantity
+                    })
+                });
+                await loadOrders();
+                openModal(activeOrderId);
+                showNotice(notice, 'Ürün siparişe eklendi.');
+            } catch (error) {
+                showNotice(notice, error.message, 'error');
+            }
+        });
+    }
+
     if (modalClose) {
         modalClose.addEventListener('click', closeModal);
     }
@@ -302,6 +543,8 @@
         });
     }
 
+    loadMenuItems();
+    loadTables();
     loadOrders();
     loadUnassignedOrders();
 })();

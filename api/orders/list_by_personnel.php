@@ -43,6 +43,7 @@ try {
                 o.total_amount,
                 o.status,
                 o.payment_method,
+                o.table_id,
                 t.table_number,
                 c.first_name AS customer_first_name,
                 c.last_name AS customer_last_name
@@ -103,6 +104,7 @@ try {
             'total_amount' => $order['total_amount'],
             'status' => $order['status'],
             'payment_method' => $order['payment_method'],
+            'table_id' => (int) $order['table_id'],
             'table_number' => $order['table_number'],
             'customer_name' => trim($order['customer_first_name'] . ' ' . $order['customer_last_name']),
             'items' => []

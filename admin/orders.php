@@ -24,10 +24,8 @@ include __DIR__ . '/../includes/layout/top.php';
                 <li><a href="/Restaurant-Management-System/admin/menu.php" class="nav-link">Menü</a></li>
                 <li><a href="/Restaurant-Management-System/admin/orders.php" class="nav-link active">Siparişler</a></li>
                 <li><a href="/Restaurant-Management-System/admin/reports.php" class="nav-link">Raporlar</a></li>
-                <li><a href="#" class="nav-link">Masalar</a></li>
                 <li><a href="/Restaurant-Management-System/admin/stock.php" class="nav-link">Stok</a></li>
-                <li><a href="#" class="nav-link">Kullanıcılar</a></li>
-                <li><a href="#" class="nav-link">Ayarlar</a></li>
+                <li><a href="/Restaurant-Management-System/admin/users.php" class="nav-link">Kullanıcılar</a></li>
             </ul>
             <div class="nav-footer">
                 <span class="user-name"><?php echo htmlspecialchars($username); ?></span>
@@ -127,6 +125,14 @@ include __DIR__ . '/../includes/layout/top.php';
                     <option value="Cancelled">İptal</option>
                 </select>
                 <button id="updateStatusBtn" class="btn btn--primary btn--small">Güncelle</button>
+            </div>
+        </div>
+
+        <div class="field order-status-field">
+            <label class="field__label" for="orderTableSelect">Masa</label>
+            <div class="field__control">
+                <select id="orderTableSelect" class="input"></select>
+                <button id="updateTableBtn" class="btn btn--secondary btn--small">Masa Güncelle</button>
             </div>
         </div>
 

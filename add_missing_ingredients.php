@@ -201,14 +201,17 @@ try {
     // Fresh Orange Juice (product_id: 16)
     echo "Fresh Orange Juice (ID: 16) için içerik ekleniyor...\n";
     // Portakal malzemesini kontrol et veya ekle
-    $orangeIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Orange']);
+    $orangeIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Portakal']);
+    if (!$orangeIngredient) {
+        $orangeIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Orange']);
+    }
     if (!$orangeIngredient) {
         // Portakal malzemesi yoksa ekle
         $orangeSupplier = $crud->readOne('Suppliers', 'supplier_name LIKE :name', [':name' => '%Fresh Produce%']);
         if ($orangeSupplier) {
             $orangeId = $crud->create('Ingredients', [
                 'supplier_id' => $orangeSupplier['supplier_id'],
-                'ingredient_name' => 'Orange',
+                'ingredient_name' => 'Portakal',
                 'unit' => 'kg',
                 'unit_price' => 20.00
             ]);
@@ -288,14 +291,17 @@ try {
     // Büryan (product_id: 19) - Kuzu eti yemeği
     echo "Büryan (ID: 19) için içerik ekleniyor...\n";
     // Büryan için kuzu eti malzemesi kontrol et veya ekle
-    $lambIngredient = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Lamb%']);
+    $lambIngredient = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Kuzu%']);
+    if (!$lambIngredient) {
+        $lambIngredient = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Lamb%']);
+    }
     if (!$lambIngredient) {
         // Kuzu eti malzemesi yoksa ekle
         $meatSupplier = $crud->readOne('Suppliers', 'supplier_name LIKE :name', [':name' => '%Quality Meats%']);
         if ($meatSupplier) {
             $lambId = $crud->create('Ingredients', [
                 'supplier_id' => $meatSupplier['supplier_id'],
-                'ingredient_name' => 'Lamb Meat',
+                'ingredient_name' => 'Kuzu eti',
                 'unit' => 'kg',
                 'unit_price' => 200.00
             ]);
@@ -308,7 +314,10 @@ try {
             $lambIngredientId = $lambId;
         } else {
             // Kuzu eti yoksa, Beef Steak kullan (alternatif)
-            $beefSteak = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Beef Steak%']);
+            $beefSteak = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Dana Biftek%']);
+            if (!$beefSteak) {
+                $beefSteak = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Beef Steak%']);
+            }
             $lambIngredientId = $beefSteak ? $beefSteak['ingredient_id'] : null;
         }
     } else {
@@ -324,9 +333,18 @@ try {
             ]);
         }
         // Baharatlar ekle
-        $saltIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Salt']);
-        $pepperIngredient = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Black Pepper%']);
-        $onionIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Onions']);
+        $saltIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Tuz']);
+        if (!$saltIngredient) {
+            $saltIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Salt']);
+        }
+        $pepperIngredient = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Karabiber%']);
+        if (!$pepperIngredient) {
+            $pepperIngredient = $crud->readOne('Ingredients', 'ingredient_name LIKE :name', [':name' => '%Black Pepper%']);
+        }
+        $onionIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Soğan']);
+        if (!$onionIngredient) {
+            $onionIngredient = $crud->readOne('Ingredients', 'ingredient_name = :name', [':name' => 'Onions']);
+        }
         
         if ($saltIngredient && !hasIngredient($crud, 19, $saltIngredient['ingredient_id'])) {
             $crud->create('ProductIngredients', [
@@ -359,4 +377,3 @@ try {
     echo "❌ Hata: " . $e->getMessage() . "\n";
     echo "Stack trace: " . $e->getTraceAsString() . "\n";
 }
-

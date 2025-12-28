@@ -17,6 +17,8 @@
     const orderMetaDate = document.getElementById('orderMetaDate');
     const orderStatusSelect = document.getElementById('orderStatusSelect');
     const updateStatusBtn = document.getElementById('updateStatusBtn');
+    const orderTableSelect = document.getElementById('orderTableSelect');
+    const updateTableBtn = document.getElementById('updateTableBtn');
     const orderItemsList = document.getElementById('orderItemsList');
     const orderTotalValue = document.getElementById('orderTotalValue');
     const addItemProduct = document.getElementById('addItemProduct');
@@ -26,6 +28,7 @@
 
     let orders = [];
     let menuItems = [];
+    let tables = [];
     let activeOrderId = null;
 
     const statusLabels = {
@@ -60,6 +63,25 @@
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const isGardenLocation = (location) => {
+        if (!location) return false;
+        const normalized = location.toLowerCase();
+        return normalized.includes('bahçe') || normalized.includes('bahce') || normalized.includes('garden');
+    };
+
+    const getDisplayNumber = (table) => {
+        if (!table) return '';
+        if (isGardenLocation(table.location) && Number(table.table_number) > 15) {
+            return Number(table.table_number) - 15;
+        }
+        return table.table_number;
+    };
+
+    const getTableLabel = (table) => {
+        const prefix = isGardenLocation(table.location) ? 'B' : 'M';
+        return `${prefix}${getDisplayNumber(table)}`;
     };
 
     const showNotice = (message, type = 'success') => {
@@ -180,6 +202,9 @@
         orderMetaDate.textContent = formatDate(order.order_date);
         orderStatusSelect.value = order.status;
         orderTotalValue.textContent = formatCurrency(order.total_amount);
+        if (orderTableSelect) {
+            orderTableSelect.value = order.table_id || '';
+        }
 
         renderOrderItems(order);
         modal.classList.add('active');
@@ -201,6 +226,25 @@
         }
     };
 
+    const loadTables = async () => {
+        if (!orderTableSelect) return;
+        try {
+            const data = await fetchJson('/Restaurant-Management-System/api/tables/list.php');
+            tables = data.data || [];
+            if (!tables.length) {
+                orderTableSelect.innerHTML = '<option value="">Masa bulunamadı</option>';
+                return;
+            }
+            const options = tables.map((table) => {
+            const location = table.location ? ` - ${table.location}` : '';
+            const label = `${getTableLabel(table)} (${table.capacity} kişi)${location}`;
+            return `<option value="${table.table_id}">${label}</option>`;
+            }).join('');
+            orderTableSelect.innerHTML = options;
+        } catch (error) {
+            showNotice(error.message, 'error');
+        }
+    };
     const loadMenuItems = async () => {
         try {
             const data = await fetchJson(menuApi);
@@ -293,6 +337,32 @@
         }
     });
 
+    if (updateTableBtn) {
+        updateTableBtn.addEventListener('click', async () => {
+            if (!activeOrderId) return;
+            const tableId = parseInt(orderTableSelect.value, 10);
+            if (!tableId) {
+                showNotice('Geçerli bir masa seçin.', 'error');
+                return;
+            }
+            try {
+                await fetchJson(`${apiBase}/update_table.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        order_id: activeOrderId,
+                        table_id: tableId
+                    })
+                });
+                await loadOrders();
+                openModal(activeOrderId);
+                showNotice('Masa güncellendi.');
+            } catch (error) {
+                showNotice(error.message, 'error');
+            }
+        });
+    }
+
     addItemBtn.addEventListener('click', async () => {
         if (!activeOrderId) return;
         const productId = parseInt(addItemProduct.value, 10);
@@ -350,5 +420,6 @@
     }
 
     loadMenuItems();
+    loadTables();
     loadOrders();
 })();

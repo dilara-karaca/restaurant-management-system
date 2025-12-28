@@ -238,46 +238,66 @@ INSERT INTO Customers (user_id, first_name, last_name, phone, address) VALUES
 -- 5. TABLES
 INSERT INTO Tables (table_number, capacity, status, location) VALUES
 (1, 2, 'Available', 'Window Side'),
-(2, 4, 'Available', 'Main Hall'),
+(2, 2, 'Available', 'Main Hall'),
 (3, 4, 'Available', 'Main Hall'),
 (4, 6, 'Occupied', 'Main Hall'),
 (5, 2, 'Available', 'Patio'),
 (6, 8, 'Reserved', 'VIP Section'),
 (7, 4, 'Available', 'Patio'),
-(8, 2, 'Available', 'Bar Area');
+(8, 2, 'Available', 'Bar Area'),
+(9, 6, 'Available', 'Main Hall'),
+(10, 4, 'Available', 'Main Hall'),
+(11, 2, 'Available', 'Main Hall'),
+(12, 8, 'Available', 'Main Hall'),
+(13, 6, 'Available', 'Main Hall'),
+(14, 4, 'Available', 'Main Hall'),
+(15, 8, 'Available', 'Main Hall'),
+(16, 2, 'Available', 'Bahçe'),
+(17, 4, 'Available', 'Bahçe'),
+(18, 6, 'Available', 'Bahçe'),
+(19, 2, 'Available', 'Bahçe'),
+(20, 8, 'Available', 'Bahçe'),
+(21, 4, 'Available', 'Bahçe'),
+(22, 2, 'Available', 'Bahçe'),
+(23, 6, 'Available', 'Bahçe'),
+(24, 4, 'Available', 'Bahçe'),
+(25, 8, 'Available', 'Bahçe');
 
 -- 6. SUPPLIERS
 INSERT INTO Suppliers (supplier_name, contact_person, phone, email, address) VALUES
 ('Fresh Produce Co.', 'Mehmet Öz', '02121234567', 'info@freshproduce.com', 'Bayrampaşa, İstanbul'),
 ('Quality Meats Ltd.', 'Ahmet Kaya', '02169876543', 'sales@qualitymeats.com', 'Pendik, İstanbul'),
 ('Dairy Delights', 'Ayşe Yılmaz', '02125556677', 'contact@dairydelights.com', 'Esenyurt, İstanbul'),
-('Spice Masters', 'Fatma Demir', '02163334455', 'orders@spicemasters.com', 'Kartal, İstanbul');
+('Spice Masters', 'Fatma Demir', '02163334455', 'orders@spicemasters.com', 'Kartal, İstanbul'),
+('Su Dağıtım A.Ş.', 'Murat Aksoy', '02163332211', 'iletisim@sudagitim.com', 'Maltepe, İstanbul'),
+('Anadolu Et', 'Hakan Çetin', '02165554433', 'satis@anadoluet.com', 'Çekmeköy, İstanbul'),
+('Tatlı Ustası', 'Elif Arslan', '02162223344', 'siparis@tatliustasi.com', 'Kadıköy, İstanbul');
 
 -- 7. MENU CATEGORIES
 INSERT INTO MenuCategories (category_name, description, display_order) VALUES
-('Appetizers', 'Starters and small plates', 1),
-('Soups', 'Hot and cold soups', 2),
-('Main Courses', 'Main dishes and entrées', 3),
-('Desserts', 'Sweet treats and desserts', 4),
-('Beverages', 'Hot and cold drinks', 5);
+('Başlangıçlar', 'Ara sıcaklar ve küçük tabaklar', 1),
+('Çorbalar', 'Sıcak ve soğuk çorbalar', 2),
+('Ana Yemekler', 'Ana yemekler ve ana tabaklar', 3),
+('Tatlılar', 'Tatlılar ve şekerlemeler', 4),
+('İçecekler', 'Sıcak ve soğuk içecekler', 5);
 
 -- 8. INGREDIENTS
 INSERT INTO Ingredients (supplier_id, ingredient_name, unit, unit_price) VALUES
-(1, 'Tomatoes', 'kg', 15.50),
-(1, 'Lettuce', 'kg', 12.00),
-(1, 'Onions', 'kg', 8.50),
-(1, 'Potatoes', 'kg', 6.00),
-(2, 'Chicken Breast', 'kg', 45.00),
-(2, 'Beef Steak', 'kg', 180.00),
-(2, 'Ground Beef', 'kg', 95.00),
-(3, 'Mozzarella Cheese', 'kg', 85.00),
-(3, 'Milk', 'liter', 18.00),
-(3, 'Butter', 'kg', 120.00),
-(4, 'Black Pepper', 'kg', 250.00),
-(4, 'Salt', 'kg', 5.00),
-(4, 'Olive Oil', 'liter', 95.00),
-(1, 'Garlic', 'kg', 35.00),
-(1, 'Bell Peppers', 'kg', 22.00);
+(1, 'Domates', 'kg', 15.50),
+(1, 'Marul', 'kg', 12.00),
+(1, 'Soğan', 'kg', 8.50),
+(1, 'Patates', 'kg', 6.00),
+(2, 'Tavuk Göğsü', 'kg', 45.00),
+(2, 'Dana Biftek', 'kg', 180.00),
+(2, 'Kıyma', 'kg', 95.00),
+(3, 'Mozzarella Peyniri', 'kg', 85.00),
+(3, 'Süt', 'litre', 18.00),
+(3, 'Tereyağı', 'kg', 120.00),
+(4, 'Karabiber', 'kg', 250.00),
+(4, 'Tuz', 'kg', 5.00),
+(4, 'Zeytinyağı', 'litre', 95.00),
+(1, 'Sarımsak', 'kg', 35.00),
+(1, 'Biber', 'kg', 22.00);
 
 -- 9. STOCKS
 INSERT INTO Stocks (ingredient_id, quantity, minimum_quantity) VALUES
@@ -300,32 +320,32 @@ INSERT INTO Stocks (ingredient_id, quantity, minimum_quantity) VALUES
 -- 10. MENU PRODUCTS
 INSERT INTO MenuProducts (category_id, product_name, description, price, is_available) VALUES
 -- Appetizers
-(1, 'Caesar Salad', 'Fresh romaine lettuce with parmesan and croutons', 65.00, TRUE),
-(1, 'Bruschetta', 'Toasted bread with tomatoes and garlic', 55.00, TRUE),
-(1, 'Chicken Wings', 'Spicy buffalo wings with ranch dressing', 75.00, TRUE),
-(1, 'French Fries', 'Crispy golden fries with ketchup', 45.00, TRUE),
+(1, 'Sezar Salata', 'Romaine marul, parmesan ve kruton ile', 65.00, TRUE),
+(1, 'Bruschetta', 'Domates ve sarımsaklı kızarmış ekmek', 55.00, TRUE),
+(1, 'Tavuk Kanat', 'Ranch soslu acılı tavuk kanatları', 75.00, TRUE),
+(1, 'Patates Kızartması', 'Ketçap eşliğinde çıtır patates kızartması', 45.00, TRUE),
 
 -- Soups
-(2, 'Tomato Soup', 'Creamy tomato soup with basil', 50.00, TRUE),
-(2, 'Chicken Soup', 'Homemade chicken soup with vegetables', 60.00, TRUE),
+(2, 'Domates Çorbası', 'Fesleğenli kremalı domates çorbası', 50.00, TRUE),
+(2, 'Tavuk Çorbası', 'Sebzeli ev yapımı tavuk çorbası', 60.00, TRUE),
 
 -- Main Courses
-(3, 'Grilled Chicken', 'Marinated grilled chicken with vegetables', 140.00, TRUE),
-(3, 'Beef Steak', 'Premium beef steak cooked to perfection', 280.00, TRUE),
-(3, 'Spaghetti Bolognese', 'Classic pasta with meat sauce', 95.00, TRUE),
-(3, 'Margherita Pizza', 'Fresh mozzarella, tomato sauce, and basil', 110.00, TRUE),
-(3, 'Cheeseburger', 'Juicy burger with cheese and fries', 120.00, TRUE),
+(3, 'Izgara Tavuk', 'Sebzeli marine ızgara tavuk', 140.00, TRUE),
+(3, 'Dana Biftek', 'Mükemmel pişirilmiş dana biftek', 280.00, TRUE),
+(3, 'Spaghetti Bolognese', 'Et soslu klasik makarna', 95.00, TRUE),
+(3, 'Margherita Pizza', 'Taze mozzarella, domates sosu ve fesleğen', 110.00, TRUE),
+(3, 'Peynirli Burger', 'Peynirli sulu burger ve patates kızartması', 120.00, TRUE),
 
 -- Desserts
-(4, 'Tiramisu', 'Classic Italian dessert with coffee', 70.00, TRUE),
-(4, 'Chocolate Cake', 'Rich chocolate cake with ice cream', 65.00, TRUE),
-(4, 'Cheesecake', 'New York style cheesecake', 75.00, TRUE),
+(4, 'Tiramisu', 'Kahveli klasik İtalyan tatlısı', 70.00, TRUE),
+(4, 'Çikolatalı Kek', 'Dondurmalı yoğun çikolatalı kek', 65.00, TRUE),
+(4, 'Cheesecake', 'New York usulü cheesecake', 75.00, TRUE),
 
 -- Beverages
-(5, 'Coca Cola', 'Cold soft drink (330ml)', 25.00, TRUE),
-(5, 'Fresh Orange Juice', 'Freshly squeezed orange juice', 40.00, TRUE),
-(5, 'Turkish Coffee', 'Traditional Turkish coffee', 30.00, TRUE),
-(5, 'Cappuccino', 'Italian coffee with steamed milk', 45.00, TRUE);
+(5, 'Kola', 'Soğuk gazlı içecek (330 ml)', 25.00, TRUE),
+(5, 'Taze Sıkma Portakal Suyu', 'Taze sıkılmış portakal suyu', 40.00, TRUE),
+(5, 'Türk Kahvesi', 'Geleneksel Türk kahvesi', 30.00, TRUE),
+(5, 'Cappuccino', 'Buharda sütlü İtalyan kahvesi', 45.00, TRUE);
 
 -- 11. PRODUCT INGREDIENTS (Recipe relations)
 -- Caesar Salad

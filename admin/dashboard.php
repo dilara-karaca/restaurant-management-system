@@ -44,10 +44,8 @@ include __DIR__ . '/../includes/layout/top.php';
                 <li><a href="/Restaurant-Management-System/admin/menu.php" class="nav-link">Menü</a></li>
                 <li><a href="/Restaurant-Management-System/admin/orders.php" class="nav-link">Siparişler</a></li>
                 <li><a href="/Restaurant-Management-System/admin/reports.php" class="nav-link">Raporlar</a></li>
-                <li><a href="#" class="nav-link">Masalar</a></li>
                 <li><a href="/Restaurant-Management-System/admin/stock.php" class="nav-link">Stok</a></li>
-                <li><a href="#" class="nav-link">Kullanıcılar</a></li>
-                <li><a href="#" class="nav-link">Ayarlar</a></li>
+                <li><a href="/Restaurant-Management-System/admin/users.php" class="nav-link">Kullanıcılar</a></li>
             </ul>
             <div class="nav-footer">
                 <span class="user-name"><?php echo htmlspecialchars($username); ?></span>
@@ -75,20 +73,13 @@ include __DIR__ . '/../includes/layout/top.php';
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-header">
-                        <h3>Günlük Kazanç</h3>
-                    </div>
-                    <p class="stat-value">₺2.450,50</p>
-                    <p class="stat-change positive">↑ 15% dün'e göre</p>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
                         <h3>Aktif Siparişler</h3>
                     </div>
-                    <p class="stat-value">12</p>
+                    <p class="stat-value" id="activeOrdersCount">0</p>
                     <div class="stat-status">
-                        <p class="status-line"><span class="status-dot preparing"></span>7 Hazırlanıyor</p>
-                        <p class="status-line"><span class="status-dot ready"></span>5 Teslime Hazır</p>
+                        <p class="status-line"><span class="status-dot pending"></span><span id="pendingOrdersCount">0</span> Beklemede</p>
+                        <p class="status-line"><span class="status-dot preparing"></span><span id="preparingOrdersCount">0</span> Hazırlanıyor</p>
+                        <p class="status-line"><span class="status-dot ready"></span><span id="servedOrdersCount">0</span> Servis Edildi</p>
                     </div>
                 </div>
 
@@ -96,21 +87,14 @@ include __DIR__ . '/../includes/layout/top.php';
                     <div class="stat-header">
                         <h3>Dolu Masalar</h3>
                     </div>
-                    <p class="stat-value">12 / 25</p>
+                    <p class="stat-value" id="occupiedTablesValue">0 / 0</p>
                     <p class="stat-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 40%"></div>
+                        <div class="progress-fill" id="occupiedTablesProgress" style="width: 0%"></div>
                     </div>
                     </p>
                 </div>
 
-                <div class="stat-card staff-card" id="staffCard">
-                    <div class="stat-header">
-                        <h3>Aktif Personel</h3>
-                    </div>
-                    <p class="stat-value" id="activeStaffCount">9</p>
-                    <p class="stat-change neutral">Hazır</p>
-                </div>
             </div>
 
             <!-- Charts and Content Grid -->
@@ -158,81 +142,12 @@ include __DIR__ . '/../includes/layout/top.php';
                         <h3>Gelen Siparişler</h3>
                     </div>
                     <div class="stock-list" id="ordersList">
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M1</span>
-                            </div>
-                            <span class="order-request">Tavuk Şiş x2, Pilav, Salata</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M5</span>
-                            </div>
-                            <span class="order-request">Beyti Kebap, Garnitür</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M7</span>
-                            </div>
-                            <span class="order-request">Lahmacun x4, Ayran x2</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M9</span>
-                            </div>
-                            <span class="order-request">Urfa Kebap x1, Çay x2</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M11</span>
-                            </div>
-                            <span class="order-request">Kelle Paça Çorbası, Tost</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M13</span>
-                            </div>
-                            <span class="order-request">Manti, Böbrek, Limonata</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">M15</span>
-                            </div>
-                            <span class="order-request">Döner Kebap, Meyve Suyu</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">B4</span>
-                            </div>
-                            <span class="order-request">İçli Köfte, Ayran</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">B6</span>
-                            </div>
-                            <span class="order-request">Cigkofte, Limonata</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">B8</span>
-                            </div>
-                            <span class="order-request">Hamsi Tava, Ayran</span>
-                        </div>
-                        <div class="order-request-item">
-                            <div class="order-details">
-                                <span class="order-table">B10</span>
-                            </div>
-                            <span class="order-request">Karides Güveç, Çay</span>
-                        </div>
+                        <div style="padding: 20px; text-align: center; color: var(--muted);">Yükleniyor...</div>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn btn--primary btn--large">Sipariş Ekle</button>
-                <button class="btn btn--ghost btn--large">Sorun Bildir</button>
-            </div>
         </div>
     </div>
 </main>
@@ -302,57 +217,6 @@ include __DIR__ . '/../includes/layout/top.php';
             </div>
         </div>
 
-        <!-- Personel Panel -->
-        <div id="staffPanel" class="modal-panel">
-            <h3>Çalışan Listesi</h3>
-            <div class="staff-list">
-                <div class="staff-item">
-                    <span class="staff-role">Garson Şefi</span>
-                    <span class="staff-name working">Mehmet Özdemir</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Ahmet Yılmaz</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Fatma Kaya</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Ali Demir</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Zeynep Çelik</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name not-working">Serkan Şahin</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Ayşe Kara</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Emre Yıldız</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Leyla Arslan</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name not-working">Berkay Kılıç</span>
-                </div>
-                <div class="staff-item">
-                    <span class="staff-role">Garson</span>
-                    <span class="staff-name working">Nilay Güzel</span>
-                </div>
-            </div>
-        </div>
-
         <!-- Sipariş Oluştur Panel (Masa Seçimi) -->
         <div id="orderCreatePanel" class="modal-panel">
             <h3>Sipariş Ekle - Masa Seçin</h3>
@@ -393,9 +257,6 @@ include __DIR__ . '/../includes/layout/bottom.php';
     const modalClose = document.querySelector('.modal-close');
     const orderPanel = document.getElementById('orderPanel');
     const orderInfoPanel = document.getElementById('orderInfoPanel');
-    const staffPanel = document.getElementById('staffPanel');
-    const staffCard = document.getElementById('staffCard');
-    const activeStaffCount = document.getElementById('activeStaffCount');
     const completePaymentBtn = document.getElementById('completePaymentBtn');
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
 
@@ -409,6 +270,25 @@ include __DIR__ . '/../includes/layout/bottom.php';
         return data;
     }
 
+    const isGardenLocation = (location) => {
+        if (!location) return false;
+        const normalized = location.toLowerCase();
+        return normalized.includes('bahçe') || normalized.includes('bahce') || normalized.includes('garden');
+    };
+
+    const getDisplayNumber = (table) => {
+        if (!table) return '';
+        if (isGardenLocation(table.location) && Number(table.table_number) > 15) {
+            return Number(table.table_number) - 15;
+        }
+        return table.table_number;
+    };
+
+    const getTableLabel = (table) => {
+        const prefix = isGardenLocation(table.location) ? 'B' : 'M';
+        return `${prefix}${getDisplayNumber(table)}`;
+    };
+
     // Masaları yükle
     async function loadTables() {
         try {
@@ -418,11 +298,9 @@ include __DIR__ . '/../includes/layout/bottom.php';
             // Masaları table_number ve location'a göre indexle
             data.data.forEach(table => {
                 // Location'a göre prefix belirle
-                let prefix = 'M';
-                if (table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden'))) {
-                    prefix = 'B';
-                }
-                const tableKey = `${prefix}${table.table_number}`;
+                const prefix = isGardenLocation(table.location) ? 'B' : 'M';
+                table.display_number = getDisplayNumber(table);
+                const tableKey = `${prefix}${table.display_number}`;
                 tablesData[tableKey] = table;
             });
             
@@ -514,13 +392,8 @@ include __DIR__ . '/../includes/layout/bottom.php';
     function showPaymentPanel(table) {
         if (orderInfoPanel) orderInfoPanel.style.display = 'none';
         if (orderPanel) orderPanel.style.display = 'block';
-        if (staffPanel) staffPanel.style.display = 'none';
         
-        const tableKey = table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden')) 
-            ? `B${table.table_number}` 
-            : `M${table.table_number}`;
-        
-        document.getElementById('orderTableNo').textContent = tableKey;
+        document.getElementById('orderTableNo').textContent = getTableLabel(table);
         document.getElementById('orderCustomerName').textContent = table.customer_name || '-';
         
         const itemsList = document.getElementById('orderItemsList');
@@ -553,13 +426,8 @@ include __DIR__ . '/../includes/layout/bottom.php';
         
         if (orderPanel) orderPanel.style.display = 'none';
         orderInfoPanel.style.display = 'block';
-        if (staffPanel) staffPanel.style.display = 'none';
-        
-        const tableKey = table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden')) 
-            ? `B${table.table_number}` 
-            : `M${table.table_number}`;
-        
-        document.getElementById('infoTableNo').textContent = tableKey;
+
+        document.getElementById('infoTableNo').textContent = getTableLabel(table);
         document.getElementById('infoCustomerName').textContent = table.customer_name || '-';
         document.getElementById('infoOrderStatus').textContent = table.order_status || '-';
         
@@ -633,14 +501,11 @@ include __DIR__ . '/../includes/layout/bottom.php';
             if (table.status === 'Occupied' && table.items && table.items.length > 0) {
                 const orderDiv = document.createElement('div');
                 orderDiv.className = 'order-request-item';
-                const tableKey = table.location && (table.location.toLowerCase().includes('bahçe') || table.location.toLowerCase().includes('garden')) 
-                    ? `B${table.table_number}` 
-                    : `M${table.table_number}`;
                 const itemsText = table.items.map(item => `${item.product_name} x${item.quantity}`).join(', ');
                 
                 orderDiv.innerHTML = `
                     <div class="order-details">
-                        <span class="order-table">${tableKey}</span>
+                        <span class="order-table">${getTableLabel(table)}</span>
                     </div>
                     <span class="order-request">${itemsText}</span>
                 `;
@@ -657,48 +522,43 @@ include __DIR__ . '/../includes/layout/bottom.php';
     function updateStats() {
         const occupiedCount = Object.values(tablesData).filter(t => t.status === 'Occupied').length;
         const totalTables = Object.keys(tablesData).length;
-        const statValue = document.querySelector('.stat-card:nth-child(3) .stat-value');
-        if (statValue && totalTables > 0) {
-            statValue.textContent = `${occupiedCount} / ${totalTables}`;
-            const progressFill = document.querySelector('.stat-card:nth-child(3) .progress-fill');
-            if (progressFill) {
-                progressFill.style.width = `${(occupiedCount / totalTables) * 100}%`;
-            }
+        const occupiedValue = document.getElementById('occupiedTablesValue');
+        const progressFill = document.getElementById('occupiedTablesProgress');
+        if (occupiedValue) {
+            occupiedValue.textContent = `${occupiedCount} / ${totalTables}`;
+        }
+        if (progressFill && totalTables > 0) {
+            progressFill.style.width = `${(occupiedCount / totalTables) * 100}%`;
+        } else if (progressFill) {
+            progressFill.style.width = '0%';
+        }
+
+        const activeOrders = Object.values(tablesData).filter(
+            t => t.order_id && ['Pending', 'Preparing', 'Served'].includes(t.order_status)
+        );
+        const pendingCount = activeOrders.filter(t => t.order_status === 'Pending').length;
+        const preparingCount = activeOrders.filter(t => t.order_status === 'Preparing').length;
+        const servedCount = activeOrders.filter(t => t.order_status === 'Served').length;
+
+        const activeOrdersCount = document.getElementById('activeOrdersCount');
+        const pendingOrdersCount = document.getElementById('pendingOrdersCount');
+        const preparingOrdersCount = document.getElementById('preparingOrdersCount');
+        const servedOrdersCount = document.getElementById('servedOrdersCount');
+
+        if (activeOrdersCount) {
+            activeOrdersCount.textContent = String(activeOrders.length);
+        }
+        if (pendingOrdersCount) {
+            pendingOrdersCount.textContent = String(pendingCount);
+        }
+        if (preparingOrdersCount) {
+            preparingOrdersCount.textContent = String(preparingCount);
+        }
+        if (servedOrdersCount) {
+            servedOrdersCount.textContent = String(servedCount);
         }
     }
 
-    // Aktif garson sayısını güncelle
-    function updateStaffCount() {
-        const workingStaff = document.querySelectorAll('.staff-name.working').length;
-        activeStaffCount.textContent = workingStaff;
-    }
-
-    // Personel kartına tıklama
-    if (staffCard) {
-        staffCard.addEventListener('click', function (e) {
-            e.stopPropagation();
-            tableModal.classList.add('active');
-
-            if (orderPanel) orderPanel.style.display = 'none';
-            if (orderInfoPanel) orderInfoPanel.style.display = 'none';
-            staffPanel.style.display = 'block';
-        });
-    }
-
-    // Garson isimlerine tıklama olayı - durumu değiştir
-    document.querySelectorAll('.staff-name').forEach(staffName => {
-        staffName.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (this.classList.contains('working')) {
-                this.classList.remove('working');
-                this.classList.add('not-working');
-            } else {
-                this.classList.remove('not-working');
-                this.classList.add('working');
-            }
-            updateStaffCount();
-        });
-    });
 
     // Sayfa yüklendiğinde masaları yükle
     document.addEventListener('DOMContentLoaded', function() {

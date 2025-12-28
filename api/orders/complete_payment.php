@@ -2,6 +2,15 @@
 require_once __DIR__ . '/../../includes/cruds.php';
 require_once __DIR__ . '/../../includes/functions.php';
 
+startSession();
+
+if (
+    (!isset($_SESSION['personnel_logged_in']) || $_SESSION['personnel_logged_in'] !== true)
+    && (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ($_SESSION['role_name'] ?? '') !== 'Admin')
+) {
+    jsonResponse(false, 'Yetkisiz erişim');
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(false, 'Only POST method is allowed');
 }
@@ -23,10 +32,26 @@ try {
     $crud->beginTransaction();
     
     // Siparişi kontrol et
-    $order = $crud->readOne('Orders', 'order_id = :id', [':id' => $orderId]);
+    $whereSql = 'order_id = :id';
+    $params = [':id' => $orderId];
+    if (isset($_SESSION['personnel_logged_in']) && $_SESSION['personnel_logged_in'] === true) {
+        $personnelId = isset($_SESSION['personnel_id']) ? (int) $_SESSION['personnel_id'] : 0;
+        if ($personnelId <= 0) {
+            $crud->rollback();
+            jsonResponse(false, 'Personel bilgisi bulunamadı');
+        }
+        $whereSql .= ' AND served_by = :personnel_id';
+        $params[':personnel_id'] = $personnelId;
+    }
+    $order = $crud->readOne('Orders', $whereSql, $params);
     if (!$order) {
         $crud->rollback();
         jsonResponse(false, 'Sipariş bulunamadı');
+    }
+
+    if (in_array($order['status'], ['Completed', 'Cancelled'], true)) {
+        $crud->rollback();
+        jsonResponse(false, 'Bu sipariş için ödeme tamamlanamaz');
     }
     
     // Ödeme yöntemini ve durumu güncelle
@@ -54,4 +79,3 @@ try {
     jsonResponse(false, 'Hata: ' . $e->getMessage());
 }
 ?>
-

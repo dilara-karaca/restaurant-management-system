@@ -158,6 +158,14 @@ include __DIR__ . '/../includes/layout/top.php';
             </div>
         </div>
 
+        <div class="field order-status-field">
+            <label class="field__label" for="orderTableSelect">Masa</label>
+            <div class="field__control">
+                <select id="orderTableSelect" class="input"></select>
+                <button id="updateTableBtn" class="btn btn--secondary btn--small">Masa Güncelle</button>
+            </div>
+        </div>
+
         <div class="field">
             <label class="field__label" for="paymentMethodSelect">Ödeme Yöntemi</label>
             <div class="field__control">
@@ -168,6 +176,7 @@ include __DIR__ . '/../includes/layout/top.php';
                     <option value="Debit Card">Banka Kartı</option>
                     <option value="Mobile Payment">Mobil Ödeme</option>
                 </select>
+                <button id="completePaymentBtn" class="btn btn--primary btn--small">Ödemeyi Tamamla</button>
             </div>
         </div>
 
@@ -177,6 +186,7 @@ include __DIR__ . '/../includes/layout/top.php';
                 <span>Adet</span>
                 <span>Birim</span>
                 <span>Tutar</span>
+                <span>İşlem</span>
             </div>
             <div id="orderItemsList" class="order-items-list"></div>
         </div>
@@ -184,6 +194,22 @@ include __DIR__ . '/../includes/layout/top.php';
         <div class="order-total-row">
             <span>Toplam</span>
             <span id="orderTotalValue">₺0</span>
+        </div>
+
+        <div class="order-add-row">
+            <div class="field">
+                <label class="field__label" for="addItemProduct">Ürün Ekle</label>
+                <div class="field__control">
+                    <select id="addItemProduct" class="input"></select>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field__label" for="addItemQty">Adet</label>
+                <div class="field__control">
+                    <input id="addItemQty" class="input" type="number" min="1" value="1">
+                </div>
+            </div>
+            <button id="addItemBtn" class="btn btn--primary btn--small">Ürün Ekle</button>
         </div>
     </div>
 </div>

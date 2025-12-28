@@ -217,6 +217,18 @@
         gap: 12px;
     }
 
+    .grid-form {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 6px;
+    }
+
     .field {
         display: grid;
         gap: 8px;
@@ -614,6 +626,10 @@
 
     .status-dot.preparing {
         background: #f59e0b;
+    }
+
+    .status-dot.pending {
+        background: #ef4444;
     }
 
     .status-dot.ready {
@@ -1897,6 +1913,10 @@
     }
 
     @media (max-width: 768px) {
+        .grid-form {
+            grid-template-columns: 1fr;
+        }
+
         .admin-nav {
             position: fixed;
             left: 0;
