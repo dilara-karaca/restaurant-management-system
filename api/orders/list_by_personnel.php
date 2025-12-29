@@ -21,6 +21,7 @@ if ($status !== '' && !in_array($status, $allowedStatuses, true)) {
 
 try {
     $crud = new CRUD();
+    
     // SP-15: Personel sipariş listesi (3+ tablo JOIN)
     $orders = $crud->customQuery(
         "CALL sp_list_orders_by_personnel(:personnel_id, :status)",
@@ -101,12 +102,12 @@ try {
         $ordersById[$orderId] = [
             'order_id' => $orderId,
             'order_date' => $order['order_date'],
-            'total_amount' => $order['total_amount'],
+            'total_amount' => (float) ($order['total_amount'] ?? 0),
             'status' => $order['status'],
-            'payment_method' => $order['payment_method'],
-            'table_id' => (int) $order['table_id'],
-            'table_number' => $order['table_number'],
-            'customer_name' => trim($order['customer_first_name'] . ' ' . $order['customer_last_name']),
+            'payment_method' => $order['payment_method'] ?? null,
+            'table_id' => (int) ($order['table_id'] ?? 0),
+            'table_number' => $order['table_number'] ?? '',
+            'customer_name' => trim(($order['customer_first_name'] ?? '') . ' ' . ($order['customer_last_name'] ?? '')),
             'items' => []
         ];
     }

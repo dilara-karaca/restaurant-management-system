@@ -181,18 +181,8 @@ include __DIR__ . '/../includes/layout/top.php';
                 <span>Toplam:</span>
                 <span id="orderTotalAmount">₺0.00</span>
             </div>
-            <div class="form-group" style="margin-top: 16px;">
-                <label>Ödeme Yöntemi *</label>
-                <select id="paymentMethodSelect" class="form-input">
-                    <option value="">Seçiniz</option>
-                    <option value="Cash">Nakit</option>
-                    <option value="Credit Card">Kredi Kartı</option>
-                    <option value="Debit Card">Banka Kartı</option>
-                    <option value="Mobile Payment">Mobil Ödeme</option>
-                </select>
-            </div>
-            <p id="paymentStatusNote" class="payment-status-note"></p>
-            <button id="completePaymentBtn" class="btn btn--primary btn--block" style="margin-top: 16px;">💳 Ödemeyi Al</button>
+            <p id="paymentStatusNote" class="payment-status-note" style="margin-top: 16px;"></p>
+            <button id="completePaymentBtn" class="btn btn--primary btn--block" style="margin-top: 16px;">🗑️ Masayı Boşalt</button>
         </div>
 
         <!-- Sipariş Bilgi Panel (Yeşil/Sarı masalar için) -->
@@ -314,6 +304,7 @@ include __DIR__ . '/../includes/layout/bottom.php';
     const apiBase = '../api';
     let tablesData = {};
     let currentOrderId = null;
+    let currentTableId = null;
 
     // Modal elemanları
     const tableModal = document.getElementById('tableModal');
@@ -529,20 +520,21 @@ include __DIR__ . '/../includes/layout/bottom.php';
         
         document.getElementById('orderTotalAmount').textContent = `₺${parseFloat(table.total_amount || 0).toFixed(2)}`;
         currentOrderId = table.order_id;
+        currentTableId = table.table_id;
         const hasPayment = !!(table.payment_method);
-        if (paymentMethodSelect) {
-            paymentMethodSelect.value = table.payment_method || '';
-            paymentMethodSelect.disabled = hasPayment;
-        }
+        
         if (completePaymentBtn) {
-            completePaymentBtn.disabled = hasPayment;
-            completePaymentBtn.textContent = hasPayment ? 'Ödeme Alındı' : '💳 Ödemeyi Al';
+            completePaymentBtn.disabled = false;
+            completePaymentBtn.textContent = '🗑️ Masayı Boşalt';
         }
         if (paymentStatusNote) {
-            paymentStatusNote.textContent = hasPayment
-                ? `Ödeme alındı (${formatPaymentMethod(table.payment_method)}).`
-                : 'Ödeme bekleniyor.';
-            paymentStatusNote.classList.toggle('is-paid', hasPayment);
+            if (hasPayment) {
+                paymentStatusNote.textContent = `Ödeme alındı (${formatPaymentMethod(table.payment_method)}).`;
+                paymentStatusNote.classList.add('is-paid');
+            } else {
+                paymentStatusNote.textContent = 'Ödeme bekleniyor.';
+                paymentStatusNote.classList.remove('is-paid');
+            }
         }
     }
 
@@ -696,36 +688,29 @@ include __DIR__ . '/../includes/layout/bottom.php';
         }
     }
 
-    // Ödeme tamamla
+    // Masayı boşalt
     if (completePaymentBtn) {
         completePaymentBtn.addEventListener('click', async function() {
-            if (!currentOrderId) {
-                alert('Sipariş bulunamadı');
+            if (!currentTableId) {
+                alert('Masa bulunamadı');
                 return;
             }
             
-            const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
-            if (!paymentMethod) {
-                alert('Lütfen ödeme yöntemi seçiniz');
-                return;
-            }
-            
-            if (!confirm('Ödemeyi tamamlamak istediğinizden emin misiniz?')) {
+            if (!confirm('Masayı boşaltmak istediğinizden emin misiniz?')) {
                 return;
             }
             
             try {
                 const formData = new URLSearchParams();
-                formData.append('order_id', currentOrderId);
-                formData.append('payment_method', paymentMethod);
+                formData.append('table_id', currentTableId);
                 
-                await fetchJson(`${apiBase}/orders/complete_payment.php`, {
+                await fetchJson(`${apiBase}/tables/clear.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData
                 });
                 
-                alert('Ödeme başarıyla alındı!');
+                alert('Masa başarıyla boşaltıldı!');
                 tableModal.classList.remove('active');
                 loadTables(); // Masaları yeniden yükle
             } catch (error) {

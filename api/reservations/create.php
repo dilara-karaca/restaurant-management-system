@@ -4,11 +4,13 @@ require_once __DIR__ . '/../../includes/functions.php';
 
 startSession();
 
-if (
-    !isset($_SESSION['logged_in'])
-    || $_SESSION['logged_in'] !== true
-    || ($_SESSION['role_name'] ?? '') !== 'Admin'
-) {
+// Admin kontrolü: hem admin_logged_in hem de role_name kontrolü
+$isAdmin = (
+    (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) ||
+    (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && ($_SESSION['role_name'] ?? '') === 'Admin')
+);
+
+if (!$isAdmin) {
     jsonResponse(false, 'Yetkisiz erişim');
 }
 

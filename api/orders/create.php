@@ -189,6 +189,10 @@ try {
         }
     }
 
+    $crud->update('Orders', [
+        'total_amount' => $totalAmount
+    ], 'order_id = :id', [':id' => $orderId]);
+
     $crud->commit();
 
     jsonResponse(true, 'Siparişiniz başarıyla oluşturuldu', [
