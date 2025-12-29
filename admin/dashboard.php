@@ -63,6 +63,7 @@ include __DIR__ . '/../includes/layout/top.php';
                         <p class="header-time"><?php echo $current_time; ?> • <?php echo $service_type; ?></p>
                     </div>
                     <div class="header-actions">
+                        <button id="openReservationBtn" class="btn btn--secondary">Rezervasyon Ekle</button>
                         <button class="icon-btn">🔔</button>
                         <a href="logout.php" class="logout-link">Çıkış</a>
                     </div>
@@ -108,6 +109,8 @@ include __DIR__ . '/../includes/layout/top.php';
                                     style="background: #10b981;"></span>Boş</span>
                             <span class="legend-item"><span class="legend-dot"
                                     style="background: #ef4444;"></span>Dolu</span>
+                            <span class="legend-item"><span class="legend-dot"
+                                    style="background: #f59e0b;"></span>Rezervasyon</span>
                         </div>
                     </div>
 
@@ -188,6 +191,7 @@ include __DIR__ . '/../includes/layout/top.php';
                     <option value="Mobile Payment">Mobil Ödeme</option>
                 </select>
             </div>
+            <p id="paymentStatusNote" class="payment-status-note"></p>
             <button id="completePaymentBtn" class="btn btn--primary btn--block" style="margin-top: 16px;">💳 Ödemeyi Al</button>
         </div>
 
@@ -208,6 +212,16 @@ include __DIR__ . '/../includes/layout/top.php';
                     <span id="infoOrderStatus" class="info-value">-</span>
                 </div>
             </div>
+            <div id="reservationDetails" class="panel-info" style="display: none;">
+                <div class="info-row">
+                    <span class="info-label">Rezervasyon:</span>
+                    <span id="reservationCustomer" class="info-value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Saat:</span>
+                    <span id="reservationTimeValue" class="info-value">-</span>
+                </div>
+            </div>
             <div class="orders-list" id="infoOrderItemsList">
                 <!-- Sipariş kalemleri buraya dinamik olarak eklenecek -->
             </div>
@@ -215,6 +229,7 @@ include __DIR__ . '/../includes/layout/top.php';
                 <span>Toplam:</span>
                 <span id="infoTotalAmount">₺0.00</span>
             </div>
+            <button id="cancelReservationTableBtn" class="btn btn--secondary btn--block" style="margin-top: 16px; display: none;">Rezervasyonu İptal Et</button>
         </div>
 
         <!-- Sipariş Oluştur Panel (Masa Seçimi) -->
@@ -242,6 +257,54 @@ include __DIR__ . '/../includes/layout/top.php';
     </div>
 </div>
 
+<div id="reservationModal" class="modal">
+    <div class="modal-content modal-wide">
+        <button class="modal-close" id="reservationModalClose">&times;</button>
+        <div class="modal-title-row">
+            <h3>Rezervasyon Ekle</h3>
+        </div>
+        <p class="helper-text">Uygun masayı seçin.</p>
+        <div id="reservationTablesGrid" class="tables-grid"></div>
+    </div>
+</div>
+
+<div id="reservationFormModal" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" id="reservationFormClose">&times;</button>
+        <div class="modal-title-row">
+            <h3>Rezervasyon Bilgisi</h3>
+        </div>
+        <div class="panel-info">
+            <div class="info-row">
+                <span class="info-label">Masa:</span>
+                <span id="reservationTableLabel" class="info-value">-</span>
+            </div>
+        </div>
+        <div class="field">
+            <label class="field__label" for="reservationFirstName">Ad</label>
+            <div class="field__control">
+                <input id="reservationFirstName" class="input" type="text" placeholder="Ad">
+            </div>
+        </div>
+        <div class="field">
+            <label class="field__label" for="reservationLastName">Soyad</label>
+            <div class="field__control">
+                <input id="reservationLastName" class="input" type="text" placeholder="Soyad">
+            </div>
+        </div>
+        <div class="field">
+            <label class="field__label" for="reservationTime">Saat</label>
+            <div class="field__control">
+                <input id="reservationTime" class="input" type="time">
+            </div>
+        </div>
+        <div class="modal-title-row" style="justify-content: flex-end; margin-top: 12px;">
+            <button id="cancelReservationBtn" class="btn btn--secondary">Vazgeç</button>
+            <button id="saveReservationBtn" class="btn btn--primary">Rezervasyonu Kaydet</button>
+        </div>
+    </div>
+</div>
+
 <?php
 include __DIR__ . '/../includes/layout/bottom.php';
 ?>
@@ -254,11 +317,28 @@ include __DIR__ . '/../includes/layout/bottom.php';
 
     // Modal elemanları
     const tableModal = document.getElementById('tableModal');
-    const modalClose = document.querySelector('.modal-close');
+    const modalClose = document.querySelector('#tableModal .modal-close');
     const orderPanel = document.getElementById('orderPanel');
     const orderInfoPanel = document.getElementById('orderInfoPanel');
     const completePaymentBtn = document.getElementById('completePaymentBtn');
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+    const paymentStatusNote = document.getElementById('paymentStatusNote');
+    const openReservationBtn = document.getElementById('openReservationBtn');
+    const reservationModal = document.getElementById('reservationModal');
+    const reservationModalClose = document.getElementById('reservationModalClose');
+    const reservationTablesGrid = document.getElementById('reservationTablesGrid');
+    const reservationFormModal = document.getElementById('reservationFormModal');
+    const reservationFormClose = document.getElementById('reservationFormClose');
+    const reservationTableLabel = document.getElementById('reservationTableLabel');
+    const reservationFirstName = document.getElementById('reservationFirstName');
+    const reservationLastName = document.getElementById('reservationLastName');
+    const reservationTime = document.getElementById('reservationTime');
+    const saveReservationBtn = document.getElementById('saveReservationBtn');
+    const cancelReservationBtn = document.getElementById('cancelReservationBtn');
+    const reservationDetails = document.getElementById('reservationDetails');
+    const reservationCustomer = document.getElementById('reservationCustomer');
+    const reservationTimeValue = document.getElementById('reservationTimeValue');
+    const cancelReservationTableBtn = document.getElementById('cancelReservationTableBtn');
 
     // Fetch helper
     async function fetchJson(url, options = {}) {
@@ -287,6 +367,17 @@ include __DIR__ . '/../includes/layout/bottom.php';
     const getTableLabel = (table) => {
         const prefix = isGardenLocation(table.location) ? 'B' : 'M';
         return `${prefix}${getDisplayNumber(table)}`;
+    };
+
+    const paymentMethodLabels = {
+        'Cash': 'Nakit',
+        'Credit Card': 'Kredi Kartı',
+        'Debit Card': 'Banka Kartı',
+        'Mobile Payment': 'Mobil Ödeme'
+    };
+
+    const formatPaymentMethod = (method) => {
+        return paymentMethodLabels[method] || method || '-';
     };
 
     // Masaları yükle
@@ -342,6 +433,27 @@ include __DIR__ . '/../includes/layout/bottom.php';
         attachTableListeners();
     }
 
+    function renderReservationTables() {
+        if (!reservationTablesGrid) return;
+        const availableTables = Object.values(tablesData).filter(table => table.status === 'Available');
+        if (!availableTables.length) {
+            reservationTablesGrid.innerHTML = '<div style="padding: 16px; color: var(--muted);">Uygun masa bulunamadı.</div>';
+            return;
+        }
+
+        reservationTablesGrid.innerHTML = availableTables.map(table => {
+            const label = getTableLabel(table);
+            return `
+                <div class="table-selection-item" data-table-id="${table.table_id}" data-table-label="${label}">
+                    <div class="table-item-box empty">
+                        <div class="table-item-no">${label}</div>
+                        <div class="table-item-label">Müsait</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     // Masa elementi oluştur
     function createTableElement(tableKey, table) {
         const div = document.createElement('div');
@@ -353,8 +465,9 @@ include __DIR__ . '/../includes/layout/bottom.php';
         if (table) {
             if (table.status === 'Occupied') {
                 div.classList.add('occupied');
+            } else if (table.status === 'Reserved') {
+                div.classList.add('reserved');
             }
-            // Reserved durumu artık kullanılmıyor
         }
         
         return div;
@@ -416,7 +529,21 @@ include __DIR__ . '/../includes/layout/bottom.php';
         
         document.getElementById('orderTotalAmount').textContent = `₺${parseFloat(table.total_amount || 0).toFixed(2)}`;
         currentOrderId = table.order_id;
-        if (paymentMethodSelect) paymentMethodSelect.value = '';
+        const hasPayment = !!(table.payment_method);
+        if (paymentMethodSelect) {
+            paymentMethodSelect.value = table.payment_method || '';
+            paymentMethodSelect.disabled = hasPayment;
+        }
+        if (completePaymentBtn) {
+            completePaymentBtn.disabled = hasPayment;
+            completePaymentBtn.textContent = hasPayment ? 'Ödeme Alındı' : '💳 Ödemeyi Al';
+        }
+        if (paymentStatusNote) {
+            paymentStatusNote.textContent = hasPayment
+                ? `Ödeme alındı (${formatPaymentMethod(table.payment_method)}).`
+                : 'Ödeme bekleniyor.';
+            paymentStatusNote.classList.toggle('is-paid', hasPayment);
+        }
     }
 
 
@@ -427,9 +554,11 @@ include __DIR__ . '/../includes/layout/bottom.php';
         if (orderPanel) orderPanel.style.display = 'none';
         orderInfoPanel.style.display = 'block';
 
+        const isReserved = table.status === 'Reserved';
         document.getElementById('infoTableNo').textContent = getTableLabel(table);
-        document.getElementById('infoCustomerName').textContent = table.customer_name || '-';
-        document.getElementById('infoOrderStatus').textContent = table.order_status || '-';
+        document.getElementById('infoCustomerName').textContent = table.customer_name || (isReserved ? table.reservation_name || '-' : '-');
+        const infoStatus = table.order_status || (isReserved ? 'Rezervasyon' : '-');
+        document.getElementById('infoOrderStatus').textContent = infoStatus;
         
         const itemsList = document.getElementById('infoOrderItemsList');
         itemsList.innerHTML = '';
@@ -446,10 +575,125 @@ include __DIR__ . '/../includes/layout/bottom.php';
                 itemsList.appendChild(itemDiv);
             });
         } else {
-            itemsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted);">Bu masada aktif sipariş yok</div>';
+            itemsList.innerHTML = isReserved
+                ? '<div style="padding: 20px; text-align: center; color: var(--muted);">Rezervasyonlu masa</div>'
+                : '<div style="padding: 20px; text-align: center; color: var(--muted);">Bu masada aktif sipariş yok</div>';
         }
         
         document.getElementById('infoTotalAmount').textContent = `₺${parseFloat(table.total_amount || 0).toFixed(2)}`;
+
+        if (reservationDetails && reservationCustomer && reservationTimeValue && cancelReservationTableBtn) {
+            if (isReserved) {
+                reservationCustomer.textContent = table.reservation_name || '-';
+                reservationTimeValue.textContent = table.reservation_time || '-';
+                reservationDetails.style.display = 'block';
+                cancelReservationTableBtn.style.display = 'block';
+                cancelReservationTableBtn.dataset.reservationId = table.reservation_id || '';
+                cancelReservationTableBtn.dataset.tableId = table.table_id || '';
+            } else {
+                reservationDetails.style.display = 'none';
+                cancelReservationTableBtn.style.display = 'none';
+                cancelReservationTableBtn.dataset.reservationId = '';
+                cancelReservationTableBtn.dataset.tableId = '';
+            }
+        }
+    }
+
+    function openReservationModal() {
+        if (!reservationModal) return;
+        renderReservationTables();
+        reservationModal.classList.add('active');
+    }
+
+    function closeReservationModal() {
+        if (!reservationModal) return;
+        reservationModal.classList.remove('active');
+    }
+
+    function openReservationForm(tableId, tableLabel) {
+        if (!reservationFormModal) return;
+        reservationFormModal.dataset.tableId = tableId;
+        if (reservationTableLabel) reservationTableLabel.textContent = tableLabel;
+        if (reservationFirstName) reservationFirstName.value = '';
+        if (reservationLastName) reservationLastName.value = '';
+        if (reservationTime) reservationTime.value = '';
+        reservationFormModal.classList.add('active');
+    }
+
+    function closeReservationForm() {
+        if (!reservationFormModal) return;
+        reservationFormModal.classList.remove('active');
+        reservationFormModal.dataset.tableId = '';
+    }
+
+    async function saveReservation() {
+        const tableId = reservationFormModal ? parseInt(reservationFormModal.dataset.tableId || '', 10) : 0;
+        const firstName = reservationFirstName ? reservationFirstName.value.trim() : '';
+        const lastName = reservationLastName ? reservationLastName.value.trim() : '';
+        const reservedAt = reservationTime ? reservationTime.value : '';
+
+        if (!tableId) {
+            alert('Masa seçimi bulunamadı.');
+            return;
+        }
+        if (!firstName || !lastName) {
+            alert('Lütfen ad ve soyad giriniz.');
+            return;
+        }
+        if (!reservedAt) {
+            alert('Lütfen saat seçiniz.');
+            return;
+        }
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('table_id', tableId);
+            formData.append('first_name', firstName);
+            formData.append('last_name', lastName);
+            formData.append('reserved_at', reservedAt);
+
+            await fetchJson(`${apiBase}/reservations/create.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+
+            closeReservationForm();
+            closeReservationModal();
+            loadTables();
+            alert('Rezervasyon kaydedildi.');
+        } catch (error) {
+            alert('Hata: ' + error.message);
+        }
+    }
+
+    async function cancelReservation() {
+        const reservationId = cancelReservationTableBtn ? parseInt(cancelReservationTableBtn.dataset.reservationId || '', 10) : 0;
+        const tableId = cancelReservationTableBtn ? parseInt(cancelReservationTableBtn.dataset.tableId || '', 10) : 0;
+        if (!reservationId && !tableId) {
+            alert('Rezervasyon bulunamadı.');
+            return;
+        }
+        if (!confirm('Rezervasyonu iptal etmek istiyor musunuz?')) {
+            return;
+        }
+        try {
+            const formData = new URLSearchParams();
+            if (reservationId) formData.append('reservation_id', reservationId);
+            if (tableId) formData.append('table_id', tableId);
+
+            await fetchJson(`${apiBase}/reservations/cancel.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+
+            tableModal.classList.remove('active');
+            loadTables();
+            alert('Rezervasyon iptal edildi.');
+        } catch (error) {
+            alert('Hata: ' + error.message);
+        }
     }
 
     // Ödeme tamamla
@@ -578,4 +822,54 @@ include __DIR__ . '/../includes/layout/bottom.php';
             tableModal.classList.remove('active');
         }
     });
+
+    if (openReservationBtn) {
+        openReservationBtn.addEventListener('click', openReservationModal);
+    }
+
+    if (reservationModalClose) {
+        reservationModalClose.addEventListener('click', closeReservationModal);
+    }
+
+    if (reservationModal) {
+        reservationModal.addEventListener('click', (e) => {
+            if (e.target === reservationModal) {
+                closeReservationModal();
+            }
+        });
+    }
+
+    if (reservationTablesGrid) {
+        reservationTablesGrid.addEventListener('click', (event) => {
+            const target = event.target.closest('.table-selection-item');
+            if (!target) return;
+            const tableId = target.dataset.tableId;
+            const tableLabel = target.dataset.tableLabel;
+            openReservationForm(tableId, tableLabel);
+        });
+    }
+
+    if (reservationFormClose) {
+        reservationFormClose.addEventListener('click', closeReservationForm);
+    }
+
+    if (cancelReservationBtn) {
+        cancelReservationBtn.addEventListener('click', closeReservationForm);
+    }
+
+    if (reservationFormModal) {
+        reservationFormModal.addEventListener('click', (event) => {
+            if (event.target === reservationFormModal) {
+                closeReservationForm();
+            }
+        });
+    }
+
+    if (saveReservationBtn) {
+        saveReservationBtn.addEventListener('click', saveReservation);
+    }
+
+    if (cancelReservationTableBtn) {
+        cancelReservationTableBtn.addEventListener('click', cancelReservation);
+    }
 </script>

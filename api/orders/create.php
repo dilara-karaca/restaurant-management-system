@@ -11,6 +11,7 @@ $customerName = isset($_POST['customer_name']) ? trim(cleanInput($_POST['custome
 $firstName = isset($_POST['first_name']) ? trim(cleanInput($_POST['first_name'])) : '';
 $lastName = isset($_POST['last_name']) ? trim(cleanInput($_POST['last_name'])) : '';
 $orderNote = isset($_POST['order_note']) ? cleanInput($_POST['order_note']) : null;
+$paymentMethod = isset($_POST['payment_method']) ? cleanInput($_POST['payment_method']) : '';
 $itemsJson = isset($_POST['items']) ? $_POST['items'] : '[]';
 $items = json_decode($itemsJson, true);
 
@@ -26,6 +27,15 @@ if (empty($customerName) || strlen($customerName) < 2) {
 
 if (empty($items) || !is_array($items)) {
     jsonResponse(false, 'Sepetiniz boş');
+}
+
+$allowedPayments = ['Cash', 'Credit Card', 'Debit Card', 'Mobile Payment'];
+if ($paymentMethod !== '' && !in_array($paymentMethod, $allowedPayments, true)) {
+    jsonResponse(false, 'Geçersiz ödeme yöntemi');
+}
+
+if ($paymentMethod !== '' && $paymentMethod !== 'Mobile Payment') {
+    jsonResponse(false, 'Bu ödeme yöntemi müşteri siparişinde kullanılamaz');
 }
 
 // İsimleri temizle ve ayarla
@@ -103,8 +113,7 @@ try {
         jsonResponse(false, 'Müşteri kaydı oluşturulamadı');
     }
 
-    // Sipariş oluştur (payment_method NULL - personel ödeme alacak)
-    // payment_method NULL olabilir çünkü personel daha sonra ödeme alacak
+    // Sipariş oluştur (mobil ödeme için payment_method işlenebilir)
     $orderData = [
         'customer_id' => $customerId,
         'table_id' => $tableId,
@@ -112,6 +121,9 @@ try {
         'total_amount' => 0, // Trigger ile güncellenecek
         'status' => 'Pending'
     ];
+    if ($paymentMethod !== '') {
+        $orderData['payment_method'] = $paymentMethod;
+    }
     // payment_method NULL olarak eklenmeyecek (ENUM NULL kabul etmeyebilir)
     
     $orderId = $crud->create('Orders', $orderData);
@@ -203,4 +215,3 @@ try {
     jsonResponse(false, 'Veritabanı hatası: ' . $e->getMessage());
 }
 ?>
-

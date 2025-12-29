@@ -3,7 +3,13 @@ require_once __DIR__ . '/../includes/layout/top.php';
 require_once __DIR__ . '/../includes/layout/customer_nav.php';
 
 $paymentMethod = isset($_GET['method']) ? $_GET['method'] : 'mobile';
-$methodName = 'Mobil Ödeme';
+$methodNameMap = [
+    'mobile' => 'Mobil Ödeme',
+    'cash' => 'Nakit',
+    'credit' => 'Kredi Kartı',
+    'debit' => 'Banka Kartı'
+];
+$methodName = $methodNameMap[$paymentMethod] ?? 'Mobil Ödeme';
 ?>
 
 <style>
@@ -338,10 +344,10 @@ $methodName = 'Mobil Ödeme';
 </style>
 
 <div class="payment-container">
-    <div class="payment-icon">�</div>
+    <div class="payment-icon">📱</div>
     
     <div class="payment-header">
-        <h2>Mobil Ödeme</h2>
+        <h2 id="paymentTitle"><?= htmlspecialchars($methodName) ?></h2>
         <p>Güvenli ödeme sayfası</p>
     </div>
 
@@ -408,7 +414,18 @@ $methodName = 'Mobil Ödeme';
 
 <script>
 // LocalStorage'dan sipariş bilgilerini al
-const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder'));
+const pendingOrder = JSON.parse(localStorage.getItem('pendingOrderDraft'));
+const paymentTitle = document.getElementById('paymentTitle');
+
+if (paymentTitle && pendingOrder && pendingOrder.payment_method) {
+    const methodNames = {
+        'Mobile Payment': 'Mobil Ödeme',
+        'Cash': 'Nakit',
+        'Credit Card': 'Kredi Kartı',
+        'Debit Card': 'Banka Kartı'
+    };
+    paymentTitle.textContent = methodNames[pendingOrder.payment_method] || paymentTitle.textContent;
+}
 
 if (pendingOrder) {
     // Sipariş özetini göster
@@ -419,7 +436,7 @@ if (pendingOrder) {
         const itemTotal = item.price * item.quantity;
         itemsHTML += `
             <div class="order-summary__item">
-                <span>${item.name} x${item.quantity}</span>
+                <span>${item.name || item.productName || 'Ürün'} x${item.quantity}</span>
                 <span>${itemTotal.toFixed(2)} ₺</span>
             </div>
         `;
@@ -495,16 +512,61 @@ if (paymentForm) {
         };
         
         console.log('Mobil ödeme - Kart ile ödeme verileri:', paymentData);
-        // TODO: API'ye gönderilecek
         
         completePayment();
     });
 }
 
-function completePayment() {
+async function createPaidOrder(orderPayload) {
+    const response = await fetch('../api/orders/create.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: orderPayload
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(result.message || 'Sipariş oluşturulamadı');
+    }
+
+    return result.data || null;
+}
+
+async function completePayment() {
+    if (!pendingOrder) {
+        showToast('Sipariş bilgisi bulunamadı. Lütfen tekrar deneyin.', 'error');
+        return;
+    }
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('customer_name', pendingOrder.customer_name);
+        formData.append('first_name', pendingOrder.first_name);
+        formData.append('last_name', pendingOrder.last_name);
+        if (pendingOrder.order_note) {
+            formData.append('order_note', pendingOrder.order_note);
+        }
+        formData.append('items', JSON.stringify(
+            pendingOrder.items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+                specialInstructions: item.specialInstructions || null
+            }))
+        ));
+        formData.append('payment_method', 'Mobile Payment');
+
+        await createPaidOrder(formData);
+    } catch (error) {
+        showToast(error.message || 'Sipariş oluşturulamadı.', 'error');
+        return;
+    }
+
     // Sepeti temizle
     localStorage.removeItem('orderCart');
-    localStorage.removeItem('pendingOrder');
+    localStorage.removeItem('pendingOrderDraft');
     
     // Başarı toast göster
     showToast('Ödemeniz başarıyla tamamlandı! Siparişiniz alındı.', 'success');

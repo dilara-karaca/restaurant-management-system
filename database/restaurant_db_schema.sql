@@ -71,6 +71,20 @@ CREATE TABLE Tables (
 ) ENGINE=InnoDB;
 
 -- ============================================
+-- 5.1 RESERVATIONS TABLE
+-- ============================================
+CREATE TABLE Reservations (
+    reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+    table_id INT NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    reserved_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (table_id) REFERENCES Tables(table_id) ON DELETE RESTRICT,
+    INDEX idx_reservation_time (reserved_at)
+) ENGINE=InnoDB;
+
+-- ============================================
 -- 6. SUPPLIERS TABLE
 -- ============================================
 CREATE TABLE Suppliers (

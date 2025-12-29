@@ -178,6 +178,7 @@ include __DIR__ . '/../includes/layout/top.php';
                 </select>
                 <button id="completePaymentBtn" class="btn btn--primary btn--small">Ödemeyi Tamamla</button>
             </div>
+            <p id="paymentStatusNote" class="payment-status-note"></p>
         </div>
 
         <div class="order-items-wrap">

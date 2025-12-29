@@ -146,10 +146,21 @@ require_once __DIR__ . '/../includes/layout/top.php';
                 <input type="text" id="customerName" class="form-input" placeholder="Adınızı ve soyadınızı giriniz" required>
             </div>
 
+            <!-- Ödeme Yöntemi -->
+            <div class="form-group">
+                <label for="paymentMethod">Ödeme Şekli *</label>
+                <select id="paymentMethod" class="form-input" required>
+                    <option value="">Seçiniz</option>
+                    <option value="Cash">Nakit</option>
+                    <option value="Credit Card">Kredi Kartı</option>
+                    <option value="Debit Card">Banka Kartı</option>
+                    <option value="Mobile Payment">Mobil Ödeme</option>
+                </select>
+            </div>
+
             <!-- Bilgi Mesajı -->
-            <div class="info-message">
-                <p>💡 Ödeme işlemi personel tarafından alınacaktır.</p>
-                <p>📍 Masa numarası otomatik olarak atanacaktır.</p>
+            <div class="info-message" id="paymentInfoMessage">
+                <p>💡 Ödeme şeklinizi seçiniz.</p>
             </div>
 
             <!-- Sipariş Notu -->
@@ -955,6 +966,22 @@ require_once __DIR__ . '/../includes/layout/top.php';
 
 <script>
 let orderCart = JSON.parse(localStorage.getItem('orderCart')) || [];
+const paymentMethodSelect = document.getElementById('paymentMethod');
+const paymentInfoMessage = document.getElementById('paymentInfoMessage');
+
+function updatePaymentInfo() {
+    if (!paymentInfoMessage) return;
+    const method = paymentMethodSelect ? paymentMethodSelect.value : '';
+    if (!method) {
+        paymentInfoMessage.innerHTML = '<p>💡 Ödeme şeklinizi seçiniz.</p>';
+        return;
+    }
+    if (method === 'Mobile Payment') {
+        paymentInfoMessage.innerHTML = '<p>📲 Mobil ödeme için ödeme sayfasına yönlendirileceksiniz.</p>';
+        return;
+    }
+    paymentInfoMessage.innerHTML = '<p>💡 Ödemeniz personel tarafından alınacaktır.</p>';
+}
 
 function toggleOrderPanel() {
     const panel = document.getElementById('orderPanel');
@@ -1114,12 +1141,17 @@ function removeFromOrder(productId) {
 // Sayfa yüklendiğinde UI'yi güncelle
 document.addEventListener('DOMContentLoaded', function() {
     updateOrderUI();
+    updatePaymentInfo();
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', updatePaymentInfo);
+    }
 });
 
 function showCheckoutConfirm() {
     // Toplam tutarı hesapla ve göster
     const total = orderCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     document.getElementById('checkoutTotal').textContent = total.toFixed(2) + ' ₺';
+    updatePaymentInfo();
     
     // Modalı aç
     document.getElementById('confirmModal').classList.add('active');
@@ -1155,10 +1187,16 @@ async function confirmCheckout() {
     // Form verilerini topla
     const customerName = document.getElementById('customerName').value.trim();
     const orderNote = document.getElementById('orderNote').value;
+    const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
     
     // Validasyon
     if (!customerName || customerName.length < 2) {
         showToast('Lütfen adınızı ve soyadınızı giriniz!', 'error');
+        return;
+    }
+
+    if (!paymentMethod) {
+        showToast('Lütfen ödeme şekli seçiniz!', 'error');
         return;
     }
     
@@ -1182,11 +1220,28 @@ async function confirmCheckout() {
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
-            specialInstructions: null
+            specialInstructions: null,
+            name: item.productName
         }))
     };
-    
+
     try {
+        if (paymentMethod === 'Mobile Payment') {
+            const orderTotal = orderCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            localStorage.setItem('pendingOrderDraft', JSON.stringify({
+                ...orderData,
+                total: orderTotal,
+                payment_method: paymentMethod
+            }));
+
+            hideCheckoutConfirm();
+            showToast('Ödeme sayfasına yönlendiriliyorsunuz...', 'success');
+            setTimeout(() => {
+                window.location.href = 'payment.php?method=mobile';
+            }, 800);
+            return;
+        }
+
         // API'ye sipariş gönder
         const formData = new URLSearchParams();
         formData.append('customer_name', orderData.customer_name);
@@ -1211,12 +1266,13 @@ async function confirmCheckout() {
         console.log('API Yanıtı:', result);
         
         if (result.success) {
-            hideCheckoutConfirm();
             const tableInfo = result.data && result.data.table_number 
                 ? ` Masa: ${result.data.table_number}` 
                 : '';
-            showToast('Siparişiniz başarıyla oluşturuldu!' + tableInfo + ' Ödeme personel tarafından alınacaktır.', 'success');
-            
+
+            hideCheckoutConfirm();
+            showToast('Siparişiniz başarıyla oluşturuldu!' + tableInfo + ' Ödemeniz alınacaktır.', 'success');
+
             // Sepeti temizle
             setTimeout(() => {
                 orderCart = [];
@@ -1227,6 +1283,10 @@ async function confirmCheckout() {
                 // Formu sıfırla
                 document.getElementById('customerName').value = '';
                 document.getElementById('orderNote').value = '';
+                if (paymentMethodSelect) {
+                    paymentMethodSelect.value = '';
+                    updatePaymentInfo();
+                }
             }, 2000);
         } else {
             console.error('Sipariş hatası:', result.message);

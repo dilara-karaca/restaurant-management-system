@@ -32,6 +32,10 @@ try {
             'customer_name' => null,
             'total_amount' => 0,
             'order_status' => null,
+            'payment_method' => null,
+            'reservation_id' => null,
+            'reservation_name' => null,
+            'reservation_time' => null,
             'items' => []
         ];
         
@@ -42,7 +46,8 @@ try {
                     o.order_id,
                     o.total_amount,
                     CONCAT(c.first_name, ' ', c.last_name) as customer_name,
-                    o.status as order_status
+                    o.status as order_status,
+                    o.payment_method
                  FROM Orders o
                  JOIN Customers c ON o.customer_id = c.customer_id
                  WHERE o.table_id = :table_id 
@@ -58,6 +63,7 @@ try {
                 $tableInfo['customer_name'] = $order['customer_name'];
                 $tableInfo['total_amount'] = $order['total_amount'];
                 $tableInfo['order_status'] = $order['order_status'];
+                $tableInfo['payment_method'] = $order['payment_method'];
                 
                 // Sipariş kalemlerini getir
                 $orderItems = $crud->customQuery(
@@ -75,6 +81,23 @@ try {
                 $tableInfo['items'] = $orderItems ?: [];
             }
         }
+
+        if ($table['status'] === 'Reserved') {
+            $reservationRows = $crud->customQuery(
+                "SELECT reservation_id, first_name, last_name, reserved_at
+                 FROM Reservations
+                 WHERE table_id = :table_id
+                 ORDER BY reserved_at DESC
+                 LIMIT 1",
+                [':table_id' => $table['table_id']]
+            );
+            if ($reservationRows && count($reservationRows) > 0) {
+                $reservation = $reservationRows[0];
+                $tableInfo['reservation_id'] = $reservation['reservation_id'];
+                $tableInfo['reservation_name'] = trim($reservation['first_name'] . ' ' . $reservation['last_name']);
+                $tableInfo['reservation_time'] = $reservation['reserved_at'];
+            }
+        }
         
         $tablesWithOrders[] = $tableInfo;
     }
@@ -85,4 +108,3 @@ try {
     jsonResponse(false, 'Hata: ' . $e->getMessage());
 }
 ?>
-

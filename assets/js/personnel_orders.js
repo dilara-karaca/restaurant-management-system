@@ -22,6 +22,7 @@
     const updateTableBtn = document.getElementById('updateTableBtn');
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
     const completePaymentBtn = document.getElementById('completePaymentBtn');
+    const paymentStatusNote = document.getElementById('paymentStatusNote');
     const orderItemsList = document.getElementById('orderItemsList');
     const orderTotalValue = document.getElementById('orderTotalValue');
     const addItemProduct = document.getElementById('addItemProduct');
@@ -49,6 +50,17 @@
         Served: 'served',
         Completed: 'completed',
         Cancelled: 'cancelled'
+    };
+
+    const paymentMethodLabels = {
+        'Cash': 'Nakit',
+        'Credit Card': 'Kredi Kartı',
+        'Debit Card': 'Banka Kartı',
+        'Mobile Payment': 'Mobil Ödeme'
+    };
+
+    const formatPaymentMethod = (method) => {
+        return paymentMethodLabels[method] || method || '-';
     };
 
     const formatCurrency = (amount) => {
@@ -231,6 +243,7 @@
         orderMetaCustomer.textContent = order.customer_name || '-';
         orderMetaDate.textContent = formatDate(order.order_date);
         orderStatusSelect.value = order.status;
+        const hasPayment = !!order.payment_method;
         if (paymentMethodSelect) {
             paymentMethodSelect.value = order.payment_method || '';
         }
@@ -238,8 +251,8 @@
 
         if (completePaymentBtn) {
             const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
-            completePaymentBtn.disabled = isFinal;
-            completePaymentBtn.textContent = isFinal ? 'Ödeme Tamamlandı' : 'Ödemeyi Tamamla';
+            completePaymentBtn.disabled = isFinal || hasPayment;
+            completePaymentBtn.textContent = (isFinal || hasPayment) ? 'Ödeme Alındı' : 'Ödemeyi Tamamla';
         }
 
         const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
@@ -252,6 +265,15 @@
         }
         if (updateTableBtn) {
             updateTableBtn.disabled = isFinal;
+        }
+        if (paymentMethodSelect) {
+            paymentMethodSelect.disabled = isFinal || hasPayment;
+        }
+        if (paymentStatusNote) {
+            paymentStatusNote.textContent = hasPayment
+                ? `Ödeme alındı (${formatPaymentMethod(order.payment_method)}).`
+                : 'Ödeme bekleniyor.';
+            paymentStatusNote.classList.toggle('is-paid', hasPayment);
         }
 
         renderOrderItems(order);

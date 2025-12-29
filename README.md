@@ -185,14 +185,27 @@ git pull origin <branch-name>
    http://localhost/Restaurant-Management-System/setup.php
    ```
 
-2. **Post-setup script'ini çalıştırın** (MUTLAKA):
+2. **Mevcut veritabanını güncelleyin** (rezervasyon tablosu ve mobil ödeme için):
+   ```sql
+   CREATE TABLE IF NOT EXISTS Reservations (
+       reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+       table_id INT NOT NULL,
+       first_name VARCHAR(50) NOT NULL,
+       last_name VARCHAR(50) NOT NULL,
+       reserved_at DATETIME NOT NULL,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       FOREIGN KEY (table_id) REFERENCES Tables(table_id) ON DELETE RESTRICT,
+       INDEX idx_reservation_time (reserved_at)
+   ) ENGINE=InnoDB;
+   ```
+
+3. **Post-setup script'ini çalıştırın** (MUTLAKA):
    ```
    http://localhost/Restaurant-Management-System/post_setup.php
    ```
 
-3. Eksik içerikler varsa "Eksik İçerikleri Ekle" butonuna tıklayın.
+4. Eksik içerikler varsa "Eksik İçerikleri Ekle" butonuna tıklayın.
 
 **⚠️ ÖNEMLİ:** Her branch çektiğinizde post-setup script'ini çalıştırın! Bu, trigger'ların ve ürün içeriklerinin güncel olduğundan emin olur.
 
 Setup script'leri güvenli şekilde çalışır - mevcut verileri silmez, sadece eksikleri ekler.
-
