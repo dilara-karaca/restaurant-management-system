@@ -65,7 +65,64 @@ try {
         jsonResponse(true, 'Sipariş listesi', []);
     }
 
-    $orderIds = array_column($orders, 'order_id');
+    $tableIds = [];
+    foreach ($orders as $order) {
+        $tableIds[] = (int) ($order['table_id'] ?? 0);
+    }
+    $tableIds = array_values(array_unique(array_filter($tableIds)));
+    $tableStatusById = [];
+    if (!empty($tableIds)) {
+        $placeholders = implode(',', array_fill(0, count($tableIds), '?'));
+        $tableRows = $crud->customQuery(
+            "SELECT table_id, status FROM Tables WHERE table_id IN ({$placeholders})",
+            $tableIds
+        );
+        if ($tableRows !== false) {
+            foreach ($tableRows as $tableRow) {
+                $tableStatusById[(int) $tableRow['table_id']] = $tableRow['status'];
+            }
+        }
+    }
+
+    $filteredOrders = [];
+    foreach ($orders as $order) {
+        $tableId = (int) ($order['table_id'] ?? 0);
+        $tableStatus = $tableStatusById[$tableId] ?? null;
+        if ($order['status'] === 'Completed' && $tableStatus === 'Available') {
+            continue;
+        }
+        $order['table_status'] = $tableStatus;
+        $filteredOrders[] = $order;
+    }
+
+    if (empty($filteredOrders)) {
+        jsonResponse(true, 'Sipariş listesi', []);
+    }
+
+    $orderIds = array_column($filteredOrders, 'order_id');
+    $paidAmountByOrder = [];
+    $paidDetailMaxByOrder = [];
+    if (!empty($orderIds)) {
+        $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+        $paidRows = $crud->customQuery(
+            "SELECT order_id, paid_amount, paid_detail_max_id FROM Orders WHERE order_id IN ({$placeholders})",
+            $orderIds
+        );
+        if ($paidRows === false) {
+            $paidRows = $crud->customQuery(
+                "SELECT order_id, paid_amount FROM Orders WHERE order_id IN ({$placeholders})",
+                $orderIds
+            );
+        }
+        if ($paidRows !== false) {
+            foreach ($paidRows as $paidRow) {
+                $paidAmountByOrder[(int) $paidRow['order_id']] = (float) ($paidRow['paid_amount'] ?? 0);
+                if (array_key_exists('paid_detail_max_id', $paidRow)) {
+                    $paidDetailMaxByOrder[(int) $paidRow['order_id']] = $paidRow['paid_detail_max_id'] ?? null;
+                }
+            }
+        }
+    }
     $orderIdsCsv = implode(',', $orderIds);
     // SP-17: Sipariş kalemleri (OrderDetails + MenuProducts)
     $details = $crud->customQuery(
@@ -97,7 +154,7 @@ try {
     }
 
     $ordersById = [];
-    foreach ($orders as $order) {
+    foreach ($filteredOrders as $order) {
         $orderId = (int) $order['order_id'];
         $ordersById[$orderId] = [
             'order_id' => $orderId,
@@ -107,6 +164,9 @@ try {
             'payment_method' => $order['payment_method'] ?? null,
             'table_id' => (int) ($order['table_id'] ?? 0),
             'table_number' => $order['table_number'] ?? '',
+            'table_status' => $order['table_status'] ?? null,
+            'paid_amount' => $paidAmountByOrder[$orderId] ?? 0,
+            'paid_detail_max_id' => $paidDetailMaxByOrder[$orderId] ?? null,
             'customer_name' => trim(($order['customer_first_name'] ?? '') . ' ' . ($order['customer_last_name'] ?? '')),
             'items' => []
         ];

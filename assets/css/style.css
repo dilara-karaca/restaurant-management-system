@@ -1592,6 +1592,31 @@
         color: #34d399;
     }
 
+    .extra-payment-bar {
+        margin-top: 16px;
+        padding: 12px;
+        border: 1px dashed rgba(245, 158, 11, .4);
+        border-radius: 10px;
+        background: rgba(245, 158, 11, .08);
+        display: grid;
+        gap: 10px;
+    }
+
+    .extra-payment-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 600;
+        color: #f59e0b;
+    }
+
+    .extra-payment-actions {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
     .modal-wide {
         width: min(760px, 95vw);
     }
@@ -1619,6 +1644,24 @@
         border: 1px solid var(--line);
         border-radius: 12px;
         overflow: hidden;
+    }
+
+    .order-items-title {
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px 12px 0;
+        color: var(--text);
+    }
+
+    .extra-items-wrap {
+        border-style: dashed;
+        border-color: rgba(245, 158, 11, .35);
+    }
+
+    .extra-items-wrap[hidden],
+    .extra-payment-bar[hidden],
+    .order-items-title[hidden] {
+        display: none;
     }
 
     .order-items-header {

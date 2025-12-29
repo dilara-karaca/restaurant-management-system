@@ -46,6 +46,12 @@ try {
     $updateData = ['status' => $status];
     if ($paymentMethod !== '') {
         $updateData['payment_method'] = $paymentMethod;
+        $updateData['paid_amount'] = $order['total_amount'];
+        $maxDetailRow = $crud->customQuery(
+            'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
+            [':id' => $orderId]
+        );
+        $updateData['paid_detail_max_id'] = $maxDetailRow[0]['max_id'] ?? null;
     }
 
     $result = $crud->update('Orders', $updateData, 'order_id = :id', [':id' => $orderId]);

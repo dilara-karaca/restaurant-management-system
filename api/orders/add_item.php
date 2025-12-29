@@ -26,6 +26,7 @@ try {
     $subtotal = $unitPrice * $quantity;
 
     $crud->beginTransaction();
+
     $detailId = $crud->create('OrderDetails', [
         'order_id' => $orderId,
         'product_id' => $productId,

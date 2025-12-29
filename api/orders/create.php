@@ -189,9 +189,20 @@ try {
         }
     }
 
-    $crud->update('Orders', [
+    $updateData = [
         'total_amount' => $totalAmount
-    ], 'order_id = :id', [':id' => $orderId]);
+    ];
+    if ($paymentMethod === 'Mobile Payment') {
+        $updateData['paid_amount'] = $totalAmount;
+    }
+    if ($paymentMethod === 'Mobile Payment') {
+        $maxDetailRow = $crud->customQuery(
+            'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
+            [':id' => $orderId]
+        );
+        $updateData['paid_detail_max_id'] = $maxDetailRow[0]['max_id'] ?? null;
+    }
+    $crud->update('Orders', $updateData, 'order_id = :id', [':id' => $orderId]);
 
     $crud->commit();
 

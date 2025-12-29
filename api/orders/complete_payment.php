@@ -55,9 +55,15 @@ try {
     }
     
     // Ödeme yöntemini ve durumu güncelle
+    $maxDetailRow = $crud->customQuery(
+        'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
+        [':id' => $orderId]
+    );
     $crud->update('Orders', [
         'payment_method' => $paymentMethod,
-        'status' => 'Completed'
+        'status' => 'Completed',
+        'paid_amount' => $order['total_amount'],
+        'paid_detail_max_id' => $maxDetailRow[0]['max_id'] ?? null
     ], 'order_id = :id', [':id' => $orderId]);
     
     // Masanın durumunu "Available" yap

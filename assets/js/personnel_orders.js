@@ -20,9 +20,17 @@
     const updateStatusBtn = document.getElementById('updateStatusBtn');
     const orderTableSelect = document.getElementById('orderTableSelect');
     const updateTableBtn = document.getElementById('updateTableBtn');
+    const paymentSection = document.getElementById('paymentSection');
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
     const completePaymentBtn = document.getElementById('completePaymentBtn');
     const paymentStatusNote = document.getElementById('paymentStatusNote');
+    const extraPaymentBar = document.getElementById('extraPaymentBar');
+    const extraPaymentAmount = document.getElementById('extraPaymentAmount');
+    const extraPaymentMethodSelect = document.getElementById('extraPaymentMethodSelect');
+    const extraPaymentBtn = document.getElementById('extraPaymentBtn');
+    const paidItemsTitle = document.getElementById('paidItemsTitle');
+    const extraItemsWrap = document.getElementById('extraItemsWrap');
+    const extraItemsList = document.getElementById('extraItemsList');
     const orderItemsList = document.getElementById('orderItemsList');
     const orderTotalValue = document.getElementById('orderTotalValue');
     const addItemProduct = document.getElementById('addItemProduct');
@@ -196,19 +204,49 @@
         }).join('');
     };
 
-    const renderOrderItems = (order) => {
-        if (!orderItemsList) return;
-        if (!order.items || !order.items.length) {
-            orderItemsList.innerHTML = '<div class="order-item-row">Sipariş kalemi yok.</div>';
-            return;
+    const getExtraPaymentInfo = (order) => {
+        const items = order.items || [];
+        const paidAmount = Number(order.paid_amount || 0);
+        const totalAmount = Number(order.total_amount || 0);
+        const extraAmount = totalAmount - paidAmount;
+        const paidDetailMaxId = order.paid_detail_max_id ? Number(order.paid_detail_max_id) : 0;
+        if (extraAmount <= 0.01 || !items.length) {
+            return { paidItems: items, extraItems: [], extraTotal: 0 };
+        }
+        if (paidDetailMaxId > 0) {
+            const paidItems = items.filter((item) => Number(item.order_detail_id) <= paidDetailMaxId);
+            const extraItems = items.filter((item) => Number(item.order_detail_id) > paidDetailMaxId);
+            const extraTotal = extraItems.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+            return { paidItems, extraItems, extraTotal };
         }
 
-        const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
+        const extraItems = [];
+        let remaining = extraAmount;
+        for (let i = items.length - 1; i >= 0; i -= 1) {
+            const item = items[i];
+            const subtotal = Number(item.subtotal || 0);
+            if (remaining > 0.01) {
+                extraItems.unshift(item);
+                remaining -= subtotal;
+            }
+        }
+        const extraIds = new Set(extraItems.map((item) => item.order_detail_id));
+        const paidItems = items.filter((item) => !extraIds.has(item.order_detail_id));
+        const extraTotal = extraItems.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+        return { paidItems, extraItems, extraTotal };
+    };
+
+    const renderItemsList = (items, target, isFinal, emptyMessage) => {
+        if (!target) return;
+        if (!items || !items.length) {
+            target.innerHTML = `<div class="order-item-row">${emptyMessage}</div>`;
+            return;
+        }
         const optionsHtml = menuItems.map((item) => `
             <option value="${item.product_id}">${item.product_name}</option>
         `).join('');
 
-        orderItemsList.innerHTML = order.items.map((item) => `
+        target.innerHTML = items.map((item) => `
             <div class="order-item-row" data-detail-id="${item.order_detail_id}">
                 <select class="input order-item-product" ${isFinal ? 'disabled' : ''}>
                     ${optionsHtml}
@@ -223,14 +261,42 @@
             </div>
         `).join('');
 
-        order.items.forEach((item) => {
-            const row = orderItemsList.querySelector(`[data-detail-id="${item.order_detail_id}"]`);
+        items.forEach((item) => {
+            const row = target.querySelector(`[data-detail-id="${item.order_detail_id}"]`);
             if (!row) return;
             const select = row.querySelector('.order-item-product');
             if (select) {
                 select.value = item.product_id;
             }
         });
+    };
+
+    const renderOrderItems = (order) => {
+        if (!orderItemsList) return;
+        const items = order.items || [];
+        if (!items.length) {
+            orderItemsList.innerHTML = '<div class="order-item-row">Sipariş kalemi yok.</div>';
+            if (extraItemsWrap) extraItemsWrap.hidden = true;
+            if (paidItemsTitle) paidItemsTitle.hidden = true;
+            return;
+        }
+
+        const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
+        const isMobilePayment = order.payment_method === 'Mobile Payment';
+        const { paidItems, extraItems, extraTotal } = getExtraPaymentInfo(order);
+        const hasExtraPayment = isMobilePayment && extraTotal > 0;
+
+        if (hasExtraPayment) {
+            renderItemsList(paidItems, orderItemsList, isFinal, 'Ödenen ürün yok.');
+            if (paidItemsTitle) paidItemsTitle.hidden = false;
+            if (extraItemsWrap) extraItemsWrap.hidden = false;
+            renderItemsList(extraItems, extraItemsList, isFinal, 'Yeni eklenen ürün yok.');
+            return;
+        }
+
+        if (paidItemsTitle) paidItemsTitle.hidden = true;
+        if (extraItemsWrap) extraItemsWrap.hidden = true;
+        renderItemsList(items, orderItemsList, isFinal, 'Sipariş kalemi yok.');
     };
 
     const openModal = (orderId) => {
@@ -248,6 +314,9 @@
             paymentMethodSelect.value = order.payment_method || '';
         }
         orderTotalValue.textContent = formatCurrency(order.total_amount);
+        const { extraTotal } = getExtraPaymentInfo(order);
+        const isMobilePayment = order.payment_method === 'Mobile Payment';
+        const hasExtraPayment = isMobilePayment && extraTotal > 0;
 
         if (completePaymentBtn) {
             const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
@@ -274,6 +343,22 @@
                 ? `Ödeme alındı (${formatPaymentMethod(order.payment_method)}).`
                 : 'Ödeme bekleniyor.';
             paymentStatusNote.classList.toggle('is-paid', hasPayment);
+        }
+        if (paymentSection) {
+            paymentSection.hidden = hasExtraPayment;
+        }
+        if (extraPaymentBar) {
+            extraPaymentBar.hidden = !hasExtraPayment;
+        }
+        if (extraPaymentAmount) {
+            extraPaymentAmount.textContent = hasExtraPayment ? formatCurrency(extraTotal) : '₺0';
+        }
+        if (extraPaymentMethodSelect) {
+            extraPaymentMethodSelect.disabled = isFinal;
+            extraPaymentMethodSelect.value = '';
+        }
+        if (extraPaymentBtn) {
+            extraPaymentBtn.disabled = isFinal;
         }
 
         renderOrderItems(order);
@@ -442,6 +527,33 @@
     if (completePaymentBtn) {
         completePaymentBtn.addEventListener('click', completePayment);
     }
+    if (extraPaymentBtn) {
+        extraPaymentBtn.addEventListener('click', async () => {
+            if (!activeOrderId) return;
+            const paymentMethod = extraPaymentMethodSelect ? extraPaymentMethodSelect.value : '';
+            if (!paymentMethod) {
+                showNotice(notice, 'Lütfen ödeme yöntemi seçin.', 'error');
+                return;
+            }
+            if (!window.confirm('Ek ödemeyi tamamlamak istediğinizden emin misiniz?')) return;
+            try {
+                await fetchJson(`${apiBase}/complete_payment.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        order_id: activeOrderId,
+                        payment_method: paymentMethod
+                    })
+                });
+                await loadOrders();
+                await loadUnassignedOrders();
+                openModal(activeOrderId);
+                showNotice(notice, 'Ek ödeme başarıyla alındı.');
+            } catch (error) {
+                showNotice(notice, error.message, 'error');
+            }
+        });
+    }
 
     if (updateTableBtn) {
         updateTableBtn.addEventListener('click', async () => {
@@ -469,60 +581,66 @@
             }
         });
     }
-    if (orderItemsList) {
-        orderItemsList.addEventListener('click', async (event) => {
-            const button = event.target.closest('[data-action]');
-            if (!button) return;
-            const action = button.dataset.action;
-            const detailId = parseInt(button.dataset.detailId, 10);
-            if (!detailId || !activeOrderId) return;
+    const handleOrderItemsClick = async (event) => {
+        const button = event.target.closest('[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        const detailId = parseInt(button.dataset.detailId, 10);
+        if (!detailId || !activeOrderId) return;
+        const container = event.currentTarget;
 
-            if (action === 'delete-item') {
-                if (!window.confirm('Bu ürünü siparişten kaldırmak istiyor musunuz?')) return;
-                try {
-                    await fetchJson(`${apiBase}/delete_item.php`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({ order_detail_id: detailId })
-                    });
-                    await loadOrders();
-                    openModal(activeOrderId);
-                    showNotice(notice, 'Ürün siparişten kaldırıldı.');
-                } catch (error) {
-                    showNotice(notice, error.message, 'error');
-                }
+        if (action === 'delete-item') {
+            if (!window.confirm('Bu ürünü siparişten kaldırmak istiyor musunuz?')) return;
+            try {
+                await fetchJson(`${apiBase}/delete_item.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ order_detail_id: detailId })
+                });
+                await loadOrders();
+                openModal(activeOrderId);
+                showNotice(notice, 'Ürün siparişten kaldırıldı.');
+            } catch (error) {
+                showNotice(notice, error.message, 'error');
+            }
+            return;
+        }
+
+        if (action === 'update-item') {
+            const row = container.querySelector(`[data-detail-id="${detailId}"]`);
+            if (!row) return;
+            const productSelect = row.querySelector('.order-item-product');
+            const qtyInput = row.querySelector('.order-item-qty');
+            const quantity = parseInt(qtyInput.value, 10);
+            const productId = parseInt(productSelect.value, 10);
+            if (!quantity || quantity <= 0 || !productId) {
+                showNotice(notice, 'Geçerli bir ürün ve miktar seçin.', 'error');
                 return;
             }
-
-            if (action === 'update-item') {
-                const row = orderItemsList.querySelector(`[data-detail-id="${detailId}"]`);
-                if (!row) return;
-                const productSelect = row.querySelector('.order-item-product');
-                const qtyInput = row.querySelector('.order-item-qty');
-                const quantity = parseInt(qtyInput.value, 10);
-                const productId = parseInt(productSelect.value, 10);
-                if (!quantity || quantity <= 0 || !productId) {
-                    showNotice(notice, 'Geçerli bir ürün ve miktar seçin.', 'error');
-                    return;
-                }
-                try {
-                    await fetchJson(`${apiBase}/update_item.php`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({
-                            order_detail_id: detailId,
-                            quantity,
-                            product_id: productId
-                        })
-                    });
-                    await loadOrders();
-                    openModal(activeOrderId);
-                    showNotice(notice, 'Sipariş kalemi güncellendi.');
-                } catch (error) {
-                    showNotice(notice, error.message, 'error');
-                }
+            try {
+                await fetchJson(`${apiBase}/update_item.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        order_detail_id: detailId,
+                        quantity,
+                        product_id: productId
+                    })
+                });
+                await loadOrders();
+                openModal(activeOrderId);
+                showNotice(notice, 'Sipariş kalemi güncellendi.');
+            } catch (error) {
+                showNotice(notice, error.message, 'error');
             }
-        });
+        }
+    };
+
+    if (orderItemsList) {
+        orderItemsList.addEventListener('click', handleOrderItemsClick);
+    }
+    if (extraItemsList) {
+        extraItemsList.addEventListener('click', handleOrderItemsClick);
     }
 
     if (addItemBtn) {

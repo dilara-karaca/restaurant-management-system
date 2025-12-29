@@ -166,7 +166,7 @@ include __DIR__ . '/../includes/layout/top.php';
             </div>
         </div>
 
-        <div class="field">
+        <div id="paymentSection" class="field">
             <label class="field__label" for="paymentMethodSelect">Ödeme Yöntemi</label>
             <div class="field__control">
                 <select id="paymentMethodSelect" class="input">
@@ -182,6 +182,7 @@ include __DIR__ . '/../includes/layout/top.php';
         </div>
 
         <div class="order-items-wrap">
+            <div id="paidItemsTitle" class="order-items-title" hidden>Ödenen Ürünler</div>
             <div class="order-items-header">
                 <span>Ürün</span>
                 <span>Adet</span>
@@ -192,9 +193,38 @@ include __DIR__ . '/../includes/layout/top.php';
             <div id="orderItemsList" class="order-items-list"></div>
         </div>
 
+        <div id="extraItemsWrap" class="order-items-wrap extra-items-wrap" hidden>
+            <div class="order-items-title">Yeni Eklenen Ürünler</div>
+            <div class="order-items-header">
+                <span>Ürün</span>
+                <span>Adet</span>
+                <span>Birim</span>
+                <span>Tutar</span>
+                <span>İşlem</span>
+            </div>
+            <div id="extraItemsList" class="order-items-list"></div>
+        </div>
+
         <div class="order-total-row">
             <span>Toplam</span>
             <span id="orderTotalValue">₺0</span>
+        </div>
+
+        <div id="extraPaymentBar" class="extra-payment-bar" hidden>
+            <div class="extra-payment-summary">
+                <span class="extra-payment-label">Yeni Eklenenler</span>
+                <span id="extraPaymentAmount">₺0</span>
+            </div>
+            <div class="extra-payment-actions">
+                <select id="extraPaymentMethodSelect" class="input">
+                    <option value="">Ödeme yöntemi seçin</option>
+                    <option value="Cash">Nakit</option>
+                    <option value="Credit Card">Kredi Kartı</option>
+                    <option value="Debit Card">Banka Kartı</option>
+                    <option value="Mobile Payment">Mobil Ödeme</option>
+                </select>
+                <button id="extraPaymentBtn" class="btn btn--primary btn--small">Ödemeyi Güncelle</button>
+            </div>
         </div>
 
         <div class="order-add-row">
