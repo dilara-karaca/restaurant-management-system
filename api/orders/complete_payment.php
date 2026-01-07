@@ -29,6 +29,13 @@ if ($orderId <= 0) {
 
 try {
     $crud = new CRUD();
+    $columnExists = function (CRUD $crud, $table, $column) {
+        $result = $crud->customQuery(
+            'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column LIMIT 1',
+            [':table' => $table, ':column' => $column]
+        );
+        return !empty($result);
+    };
     $crud->beginTransaction();
     
     // Siparişi kontrol et
@@ -55,16 +62,21 @@ try {
     }
     
     // Ödeme yöntemini ve durumu güncelle
-    $maxDetailRow = $crud->customQuery(
-        'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
-        [':id' => $orderId]
-    );
-    $crud->update('Orders', [
+    $updateData = [
         'payment_method' => $paymentMethod,
-        'status' => 'Completed',
-        'paid_amount' => $order['total_amount'],
-        'paid_detail_max_id' => $maxDetailRow[0]['max_id'] ?? null
-    ], 'order_id = :id', [':id' => $orderId]);
+        'status' => 'Completed'
+    ];
+    if ($columnExists($crud, 'Orders', 'paid_amount')) {
+        $updateData['paid_amount'] = $order['total_amount'];
+    }
+    if ($columnExists($crud, 'Orders', 'paid_detail_max_id')) {
+        $maxDetailRow = $crud->customQuery(
+            'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
+            [':id' => $orderId]
+        );
+        $updateData['paid_detail_max_id'] = $maxDetailRow[0]['max_id'] ?? null;
+    }
+    $crud->update('Orders', $updateData, 'order_id = :id', [':id' => $orderId]);
     
     // Masanın durumunu "Available" yap
     $crud->update('Tables', [

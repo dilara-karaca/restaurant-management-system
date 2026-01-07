@@ -309,9 +309,13 @@
         orderMetaCustomer.textContent = order.customer_name || '-';
         orderMetaDate.textContent = formatDate(order.order_date);
         orderStatusSelect.value = order.status;
-        const hasPayment = !!order.payment_method;
+        const paymentMethod = order.payment_method || '';
+        const paidAmount = Number(order.paid_amount || 0);
+        const totalAmount = Number(order.total_amount || 0);
+        const isPaid = order.status === 'Completed'
+            || (paymentMethod && totalAmount > 0 && paidAmount >= totalAmount - 0.01);
         if (paymentMethodSelect) {
-            paymentMethodSelect.value = order.payment_method || '';
+            paymentMethodSelect.value = paymentMethod;
         }
         orderTotalValue.textContent = formatCurrency(order.total_amount);
         const { extraTotal } = getExtraPaymentInfo(order);
@@ -320,8 +324,8 @@
 
         if (completePaymentBtn) {
             const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
-            completePaymentBtn.disabled = isFinal || hasPayment;
-            completePaymentBtn.textContent = (isFinal || hasPayment) ? 'Ödeme Alındı' : 'Ödemeyi Tamamla';
+            completePaymentBtn.disabled = isFinal || isPaid;
+            completePaymentBtn.textContent = (isFinal || isPaid) ? 'Ödeme Alındı' : 'Ödemeyi Tamamla';
         }
 
         const isFinal = order.status === 'Completed' || order.status === 'Cancelled';
@@ -336,13 +340,17 @@
             updateTableBtn.disabled = isFinal;
         }
         if (paymentMethodSelect) {
-            paymentMethodSelect.disabled = isFinal || hasPayment;
+            paymentMethodSelect.disabled = isFinal || isPaid;
         }
         if (paymentStatusNote) {
-            paymentStatusNote.textContent = hasPayment
-                ? `Ödeme alındı (${formatPaymentMethod(order.payment_method)}).`
-                : 'Ödeme bekleniyor.';
-            paymentStatusNote.classList.toggle('is-paid', hasPayment);
+            if (isPaid) {
+                paymentStatusNote.textContent = `Ödeme alındı (${formatPaymentMethod(paymentMethod)}).`;
+            } else if (paymentMethod) {
+                paymentStatusNote.textContent = `Müşteri ödeme yöntemi: ${formatPaymentMethod(paymentMethod)}.`;
+            } else {
+                paymentStatusNote.textContent = 'Ödeme bekleniyor.';
+            }
+            paymentStatusNote.classList.toggle('is-paid', isPaid);
         }
         if (paymentSection) {
             paymentSection.hidden = hasExtraPayment;
@@ -431,15 +439,11 @@
     const updateOrderStatus = async () => {
         if (!activeOrderId) return;
         const status = orderStatusSelect.value;
-        const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
         try {
             const payload = new URLSearchParams({
                 order_id: activeOrderId,
                 status
             });
-            if (paymentMethod) {
-                payload.append('payment_method', paymentMethod);
-            }
             await fetchJson(`${apiBase}/update_status_personnel.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

@@ -1487,6 +1487,9 @@ async function confirmCheckout() {
             formData.append('order_note', orderData.order_note);
         }
         formData.append('items', JSON.stringify(orderData.items));
+        if (paymentMethod) {
+            formData.append('payment_method', paymentMethod);
+        }
         
         console.log('Sipariş gönderiliyor:', orderData);
         

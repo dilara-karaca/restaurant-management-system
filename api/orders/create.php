@@ -34,10 +34,6 @@ if ($paymentMethod !== '' && !in_array($paymentMethod, $allowedPayments, true)) 
     jsonResponse(false, 'Geçersiz ödeme yöntemi');
 }
 
-if ($paymentMethod !== '' && $paymentMethod !== 'Mobile Payment') {
-    jsonResponse(false, 'Bu ödeme yöntemi müşteri siparişinde kullanılamaz');
-}
-
 // İsimleri temizle ve ayarla
 if (empty($firstName) && empty($lastName)) {
     $nameParts = explode(' ', $customerName, 2);

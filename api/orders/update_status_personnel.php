@@ -34,6 +34,13 @@ if ($orderId <= 0 || $status === '' || !in_array($status, $allowedStatuses, true
 
 try {
     $crud = new CRUD();
+    $columnExists = function (CRUD $crud, $table, $column) {
+        $result = $crud->customQuery(
+            'SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column LIMIT 1',
+            [':table' => $table, ':column' => $column]
+        );
+        return !empty($result);
+    };
     $order = $crud->readOne('Orders', 'order_id = :id AND served_by = :personnel_id', [
         ':id' => $orderId,
         ':personnel_id' => $personnelId
@@ -46,12 +53,16 @@ try {
     $updateData = ['status' => $status];
     if ($paymentMethod !== '') {
         $updateData['payment_method'] = $paymentMethod;
-        $updateData['paid_amount'] = $order['total_amount'];
-        $maxDetailRow = $crud->customQuery(
-            'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
-            [':id' => $orderId]
-        );
-        $updateData['paid_detail_max_id'] = $maxDetailRow[0]['max_id'] ?? null;
+        if ($columnExists($crud, 'Orders', 'paid_amount')) {
+            $updateData['paid_amount'] = $order['total_amount'];
+        }
+        if ($columnExists($crud, 'Orders', 'paid_detail_max_id')) {
+            $maxDetailRow = $crud->customQuery(
+                'SELECT MAX(order_detail_id) AS max_id FROM OrderDetails WHERE order_id = :id',
+                [':id' => $orderId]
+            );
+            $updateData['paid_detail_max_id'] = $maxDetailRow[0]['max_id'] ?? null;
+        }
     }
 
     $result = $crud->update('Orders', $updateData, 'order_id = :id', [':id' => $orderId]);
